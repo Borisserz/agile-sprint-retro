@@ -3,8 +3,11 @@ import './App.css';
 
 export default function App() {
   return (
-    <main className="app">
-      <SprintList />
-    </main>
+    <div className="shell">
+      <div className="shell-glow" aria-hidden="true" />
+      <main className="app">
+        <SprintList />
+      </main>
+    </div>
   );
 }

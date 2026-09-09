@@ -73,8 +73,7 @@ export default function SprintList() {
     const goal = form.goal.trim();
     if (!name || !goal) return;
 
-    const capacity =
-      form.capacity === '' ? null : Number(form.capacity);
+    const capacity = form.capacity === '' ? null : Number(form.capacity);
     if (capacity !== null && (!Number.isInteger(capacity) || capacity < 0)) {
       return;
     }
@@ -119,45 +118,124 @@ export default function SprintList() {
 
   if (loading) {
     return (
-      <div className="panel loading">
-        <p>Loading sprints from local storage...</p>
+      <div className="board board--loading" role="status">
+        <div className="loader">
+          <span className="loader-dot" />
+          <span className="loader-dot" />
+          <span className="loader-dot" />
+        </div>
+        <p className="loader-text">Loading sprints from local storage...</p>
       </div>
     );
   }
 
   return (
-    <div className="panel">
-      <header className="panel-header">
-        <div>
-          <h1>Sprint planner</h1>
-          <p className="muted">
-            Local state + localStorage (Lab 4). Ready for API in Lab 5.
+    <div className="board board--ready">
+      <header className="masthead">
+        <p className="eyebrow">Agile sprint &amp; retro</p>
+        <div className="masthead-row">
+          <h1>Sprint desk</h1>
+          <p className="lede">
+            Plan capacity, track status, keep the board on this device.
           </p>
         </div>
-        <div className="stats">
-          <span>Total: {stats.total}</span>
-          <span>Planned: {stats.planned}</span>
-          <span>Active: {stats.active}</span>
-          <span>Done: {stats.done}</span>
-        </div>
+
+        <dl className="meter">
+          <div>
+            <dt>Total</dt>
+            <dd>{stats.total}</dd>
+          </div>
+          <div>
+            <dt>Planned</dt>
+            <dd>{stats.planned}</dd>
+          </div>
+          <div>
+            <dt>Active</dt>
+            <dd>{stats.active}</dd>
+          </div>
+          <div>
+            <dt>Done</dt>
+            <dd>{stats.done}</dd>
+          </div>
+        </dl>
       </header>
 
-      <form className="sprint-form" onSubmit={onSubmit}>
-        <h2>{editingId ? 'Edit sprint' : 'Add sprint'}</h2>
-        <div className="grid">
-          <label>
-            Name
-            <input
-              name="name"
-              value={form.name}
-              onChange={onChange}
-              placeholder="Sprint 3"
-              required
-            />
-          </label>
-          <label>
-            Status
-            <select name="status" value={form.status} onChange={onChange}>
+      <section className="compose" aria-labelledby="compose-title">
+        <div className="section-label">
+          <h2 id="compose-title">{editingId ? 'Edit sprint' : 'Add sprint'}</h2>
+          <span>{editingId ? 'Update selected item' : 'New item on the board'}</span>
+        </div>
+
+        <form className="sprint-form" onSubmit={onSubmit}>
+          <div className="grid">
+            <label>
+              Name
+              <input
+                name="name"
+                value={form.name}
+                onChange={onChange}
+                placeholder="Sprint 3"
+                required
+              />
+            </label>
+            <label>
+              Status
+              <select name="status" value={form.status} onChange={onChange}>
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="full">
+              Goal
+              <input
+                name="goal"
+                value={form.goal}
+                onChange={onChange}
+                placeholder="Connect React to API"
+                required
+              />
+            </label>
+            <label>
+              Capacity
+              <input
+                name="capacity"
+                type="number"
+                min="0"
+                step="1"
+                value={form.capacity}
+                onChange={onChange}
+                placeholder="40"
+              />
+            </label>
+          </div>
+          <div className="actions">
+            <button type="submit" className="btn btn-primary">
+              {editingId ? 'Save changes' : 'Add sprint'}
+            </button>
+            {editingId !== null && (
+              <button type="button" className="btn btn-ghost" onClick={resetForm}>
+                Cancel
+              </button>
+            )}
+          </div>
+        </form>
+      </section>
+
+      <section className="board-list" aria-labelledby="list-title">
+        <div className="list-bar">
+          <div className="section-label">
+            <h2 id="list-title">Board</h2>
+            <span>
+              Showing {visible.length} of {stats.total}
+            </span>
+          </div>
+          <label className="filter">
+            Filter by status
+            <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+              <option value="all">all</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {s}
@@ -165,81 +243,53 @@ export default function SprintList() {
               ))}
             </select>
           </label>
-          <label className="full">
-            Goal
-            <input
-              name="goal"
-              value={form.goal}
-              onChange={onChange}
-              placeholder="Connect React to API"
-              required
-            />
-          </label>
-          <label>
-            Capacity
-            <input
-              name="capacity"
-              type="number"
-              min="0"
-              step="1"
-              value={form.capacity}
-              onChange={onChange}
-              placeholder="40"
-            />
-          </label>
         </div>
-        <div className="actions">
-          <button type="submit">{editingId ? 'Save' : 'Add'}</button>
-          {editingId !== null && (
-            <button type="button" className="secondary" onClick={resetForm}>
-              Cancel
-            </button>
+
+        <ul className="sprint-list">
+          {visible.length === 0 && (
+            <li className="empty">No sprints for this filter.</li>
           )}
-        </div>
-      </form>
-
-      <div className="toolbar">
-        <label>
-          Filter by status
-          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option value="all">all</option>
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <ul className="sprint-list">
-        {visible.length === 0 && (
-          <li className="empty">No sprints for this filter.</li>
-        )}
-        {visible.map((sprint) => (
-          <li key={sprint.id} className="sprint-card">
-            <div>
-              <strong>{sprint.name}</strong>
-              <span className={`badge ${sprint.status}`}>{sprint.status}</span>
-              <p>{sprint.goal}</p>
-              <p className="muted">
-                Capacity:{' '}
-                {sprint.capacity === null || sprint.capacity === undefined
-                  ? '—'
-                  : sprint.capacity}
-              </p>
-            </div>
-            <div className="card-actions">
-              <button type="button" className="secondary" onClick={() => onEdit(sprint)}>
-                Edit
-              </button>
-              <button type="button" className="danger" onClick={() => onDelete(sprint.id)}>
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+          {visible.map((sprint, index) => (
+            <li
+              key={sprint.id}
+              className={`sprint-card status-${sprint.status}`}
+              style={{ '--i': index }}
+            >
+              <div className="sprint-main">
+                <div className="sprint-top">
+                  <h3>{sprint.name}</h3>
+                  <span className={`badge badge-${sprint.status}`}>{sprint.status}</span>
+                </div>
+                <p className="goal">{sprint.goal}</p>
+                <p className="capacity">
+                  <span>Capacity</span>
+                  <strong>
+                    {sprint.capacity === null || sprint.capacity === undefined
+                      ? '—'
+                      : sprint.capacity}
+                  </strong>
+                </p>
+              </div>
+              <div className="card-actions">
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => onEdit(sprint)}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => onDelete(sprint.id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
