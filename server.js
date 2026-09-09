@@ -3,11 +3,16 @@ require('dotenv').config({ quiet: true });
 const express = require('express');
 const { sequelize } = require('./models');
 const sprintsRouter = require('./routes/sprints');
+const authRouter = require('./routes/auth');
+const authController = require('./controllers/authController');
+const { authenticate } = require('./middleware/auth');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use('/auth', authRouter);
+app.get('/profile', authenticate, authController.profile);
 app.use('/sprints', sprintsRouter);
 
 app.use((req, res, next) => {

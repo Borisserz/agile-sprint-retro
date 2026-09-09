@@ -2,36 +2,22 @@
 
 Backend for planning sprints and retrospectives in Agile teams.
 
-Lab 2 (ITIVP): PostgreSQL + Sequelize ORM. Branch `lab22`.
+Lab 3 (ITIVP): JWT auth, bcrypt, RBAC, change-password. Branch `lab23`.
 
 ## Stack
 
-- Node.js
-- Express
-- PostgreSQL
-- Sequelize
+- Node.js / Express
+- PostgreSQL / Sequelize
+- bcrypt / jsonwebtoken
 - Docker (local database)
 
-## Database
-
-Local Postgres via Docker (port 5433 on host):
-
-```bash
-npm run db:up
-cp .env.example .env
-npm run db:migrate
-npm run db:seed
-```
-
-Cloud alternative from the course: Neon or Supabase.
-Put the connection string into `.env` as `DATABASE_URL`.
-For Neon/Supabase also set `DATABASE_SSL=true`.
-
-## Run
+## Setup
 
 ```bash
 npm install
 npm run db:up
+cp .env.example .env
+# set JWT_SECRET in .env
 npm run db:migrate
 npm run db:seed
 npm run dev
@@ -39,33 +25,31 @@ npm run dev
 
 Server: `http://localhost:3000`
 
-## Routes
+Seed users (password `Password1!`):
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | /sprints | List sprints (with action items) |
-| QUERY | /sprints | Filter by search and/or status |
-| GET | /sprints/:id | Get sprint by id |
-| POST | /sprints | Create sprint |
-| PUT | /sprints/:id | Replace sprint |
-| DELETE | /sprints/:id | Delete sprint |
+- `member@agile.local` — role `member`
+- `facilitator@agile.local` — role `facilitator`
 
-### Sprint body
+## Auth routes
 
-```json
-{
-  "name": "Sprint 3",
-  "goal": "Auth flow",
-  "startDate": "2026-09-24T00:00:00.000Z",
-  "endDate": "2026-10-07T00:00:00.000Z",
-  "status": "planned",
-  "capacity": 35
-}
-```
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | /auth/register | no | Register (role member) |
+| POST | /auth/login | no | Login, returns JWT (1h) |
+| POST | /auth/change-password | Bearer | Change password |
+| GET | /profile | Bearer | Current user |
 
-`capacity` was added by migration `add-capacity-to-sprints`.
+## Sprint routes
 
-### Models
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | /sprints | no | List |
+| QUERY | /sprints | no | Search |
+| GET | /sprints/:id | no | By id |
+| POST | /sprints | no | Create |
+| PUT | /sprints/:id | no | Update |
+| DELETE | /sprints/:id | Bearer + facilitator | Delete |
 
-- `Sprint` has many `ActionItem`
-- `ActionItem` belongs to `Sprint`
+Header: `Authorization: Bearer <token>`
+
+JWT payload: `{ id, email, role }`.
