@@ -6,3 +6,4 @@ node_modules/
 .vscode/
 report/
 docs/
+client/dist/
