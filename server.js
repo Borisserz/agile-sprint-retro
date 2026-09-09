@@ -1,8 +1,11 @@
+require('dotenv').config({ quiet: true });
+
 const express = require('express');
+const { sequelize } = require('./models');
 const sprintsRouter = require('./routes/sprints');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use('/sprints', sprintsRouter);
@@ -16,6 +19,14 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: err.message || 'Internal server error' });
 });
 
-app.listen(port, () => {
-  console.log('Server running...');
+async function start() {
+  await sequelize.authenticate();
+  app.listen(port, () => {
+    console.log('Server running...');
+  });
+}
+
+start().catch((err) => {
+  console.error('Unable to connect to the database:', err.message);
+  process.exit(1);
 });
