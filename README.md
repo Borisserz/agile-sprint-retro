@@ -2,7 +2,7 @@
 
 Backend for planning sprints and retrospectives in Agile teams.
 
-Lab 2 (ITIVP): PostgreSQL + Sequelize ORM. Branch `lab12`.
+Lab 2 (ITIVP): PostgreSQL + Sequelize ORM. Branch `lab22`.
 
 ## Stack
 

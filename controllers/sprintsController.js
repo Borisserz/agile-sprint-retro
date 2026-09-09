@@ -133,17 +133,20 @@ async function create(req, res, next) {
 
 async function update(req, res, next) {
   try {
-    const sprint = await Sprint.findByPk(req.params.id);
-    if (!sprint) {
-      return next({ status: 404, message: 'Sprint not found' });
-    }
-
+    const id = Number(req.params.id);
     const parsed = parseSprintBody(req.body);
     if (parsed.error) {
       return next({ status: 400, message: parsed.error });
     }
 
-    await sprint.update(parsed.data);
+    const [count] = await Sprint.update(parsed.data, { where: { id } });
+    if (count === 0) {
+      return next({ status: 404, message: 'Sprint not found' });
+    }
+
+    const sprint = await Sprint.findByPk(id, {
+      include: [{ model: ActionItem, as: 'actionItems' }],
+    });
     res.status(200).json(sprint);
   } catch (err) {
     next(err);
@@ -152,12 +155,13 @@ async function update(req, res, next) {
 
 async function remove(req, res, next) {
   try {
-    const sprint = await Sprint.findByPk(req.params.id);
+    const id = Number(req.params.id);
+    const sprint = await Sprint.findByPk(id);
     if (!sprint) {
       return next({ status: 404, message: 'Sprint not found' });
     }
 
-    await sprint.destroy();
+    await Sprint.destroy({ where: { id } });
     res.status(200).json(sprint);
   } catch (err) {
     next(err);
