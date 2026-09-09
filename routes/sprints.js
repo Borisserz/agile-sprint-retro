@@ -3,6 +3,13 @@ const controller = require('../controllers/sprintsController');
 
 const router = express.Router();
 
+router.all('/', (req, res, next) => {
+  if (req.method === 'QUERY') {
+    return controller.search(req, res, next);
+  }
+  next();
+});
+
 router.get('/', controller.getAll);
 router.get('/:id', controller.getById);
 router.post('/', controller.create);

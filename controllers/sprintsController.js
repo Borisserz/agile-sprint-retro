@@ -43,6 +43,36 @@ function getAll(req, res) {
   res.status(200).json(sprints);
 }
 
+function search(req, res, next) {
+  const { search, status } = req.body || {};
+
+  if (search !== undefined && (typeof search !== 'string' || !search.trim())) {
+    return next({ status: 400, message: 'search must be a non-empty string' });
+  }
+  if (status !== undefined && !STATUSES.includes(status)) {
+    return next({ status: 400, message: 'status must be planned, active or done' });
+  }
+  if (search === undefined && status === undefined) {
+    return next({ status: 400, message: 'provide search and/or status in body' });
+  }
+
+  let result = sprints;
+
+  if (status !== undefined) {
+    result = result.filter((item) => item.status === status);
+  }
+
+  if (search !== undefined) {
+    const q = search.trim().toLowerCase();
+    result = result.filter(
+      (item) =>
+        item.name.toLowerCase().includes(q) || item.goal.toLowerCase().includes(q)
+    );
+  }
+
+  res.status(200).json(result);
+}
+
 function getById(req, res, next) {
   const id = Number(req.params.id);
   const sprint = sprints.find((item) => item.id === id);
@@ -94,4 +124,4 @@ function remove(req, res, next) {
   res.status(200).json(deleted);
 }
 
-module.exports = { getAll, getById, create, update, remove };
+module.exports = { getAll, search, getById, create, update, remove };

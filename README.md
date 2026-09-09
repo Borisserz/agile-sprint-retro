@@ -24,10 +24,13 @@ Server: `http://localhost:3000`
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | /sprints | List all sprints |
+| QUERY | /sprints | Filter by search text and/or status (JSON body) |
 | GET | /sprints/:id | Get sprint by id |
 | POST | /sprints | Create sprint |
 | PUT | /sprints/:id | Replace sprint |
 | DELETE | /sprints/:id | Delete sprint |
+
+On start the server has two sample sprints in memory (dates via `Date`).
 
 ### Sprint body
 
@@ -45,10 +48,25 @@ Server: `http://localhost:3000`
 
 Dates are parsed with JavaScript `Date`.
 
+### QUERY body
+
+```json
+{
+  "search": "retro",
+  "status": "active"
+}
+```
+
+At least one of `search` / `status` is required.
+
 ### Example
 
 ```bash
 curl -X POST http://localhost:3000/sprints \
   -H "Content-Type: application/json" \
-  -d '{"name":"Sprint 1","goal":"API skeleton","startDate":"2026-09-01","endDate":"2026-09-14","status":"planned"}'
+  -d '{"name":"Sprint 3","goal":"API skeleton","startDate":"2026-09-01","endDate":"2026-09-14","status":"planned"}'
+
+curl -X QUERY http://localhost:3000/sprints \
+  -H "Content-Type: application/json" \
+  -d '{"search":"retro"}'
 ```
