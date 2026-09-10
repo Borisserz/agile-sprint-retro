@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
 const STATUSES = ['planned', 'active', 'done'];
+const FILTERS = ['all', ...STATUSES];
 
 const INITIAL_SPRINTS = [
   {
@@ -83,8 +84,8 @@ export default function SprintList() {
         prev.map((s) =>
           s.id === editingId
             ? { ...s, name, goal, status: form.status, capacity }
-            : s
-        )
+            : s,
+        ),
       );
     } else {
       setSprints((prev) => [
@@ -119,46 +120,59 @@ export default function SprintList() {
   if (loading) {
     return (
       <div className="boot" role="status">
-        <div className="boot-ring" />
-        <p>Syncing local board…</p>
+        <div className="boot-console">
+          <div className="boot-mark" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div className="boot-copy">
+            <p>Initializing sprint control</p>
+            <span>Syncing local board…</span>
+          </div>
+          <div className="boot-track" aria-hidden="true">
+            <span />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="room">
+    <main className="room">
       <header className="topbar">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true" />
           <div>
-            <p className="brand-kicker">Agile · Retro</p>
+            <p className="brand-kicker">Agile operations</p>
             <h1>Sprint Control</h1>
           </div>
         </div>
-        <div className="hud">
+        <dl className="hud" aria-label="Sprint statistics">
           <div className="hud-cell">
-            <span>Total</span>
-            <strong>{stats.total}</strong>
+            <dt>Total</dt>
+            <dd>{stats.total}</dd>
           </div>
           <div className="hud-cell">
-            <span>Planned</span>
-            <strong>{stats.planned}</strong>
+            <dt>Planned</dt>
+            <dd>{stats.planned}</dd>
           </div>
           <div className="hud-cell hud-cell--live">
-            <span>Active</span>
-            <strong>{stats.active}</strong>
+            <dt>Active</dt>
+            <dd>{stats.active}</dd>
           </div>
           <div className="hud-cell">
-            <span>Done</span>
-            <strong>{stats.done}</strong>
+            <dt>Done</dt>
+            <dd>{stats.done}</dd>
           </div>
-        </div>
+        </dl>
       </header>
 
       <div className="workspace">
-        <aside className="rail">
+        <aside className="rail" aria-labelledby="compose-title">
           <div className="rail-head">
-            <h2>{editingId ? 'Edit sprint' : 'Compose'}</h2>
+            <p className="rail-tag">{editingId ? 'Edit mode' : 'Composer'}</p>
+            <h2 id="compose-title">{editingId ? 'Edit sprint' : 'Compose sprint'}</h2>
             <p>{editingId ? 'Update selected sprint' : 'Add to the board'}</p>
           </div>
 
@@ -210,7 +224,7 @@ export default function SprintList() {
             </div>
             <div className="compose-actions">
               <button type="submit" className="btn btn-main">
-                {editingId ? 'Save' : 'Add sprint'}
+                {editingId ? 'Save changes' : 'Add sprint'}
               </button>
               {editingId !== null && (
                 <button type="button" className="btn btn-quiet" onClick={resetForm}>
@@ -221,69 +235,85 @@ export default function SprintList() {
           </form>
         </aside>
 
-        <section className="stage">
+        <section className="stage" aria-labelledby="board-title">
           <div className="stage-bar">
             <div>
-              <h2>Board</h2>
+              <h2 id="board-title">Sprint board</h2>
               <p>
                 {visible.length} shown · {stats.total} total
               </p>
             </div>
-            <label className="filter">
-              Filter
-              <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-                <option value="all">all</option>
-                {STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="seg" role="group" aria-label="Filter by status">
+              {FILTERS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`seg-btn${filter === s ? ' is-on' : ''}`}
+                  aria-pressed={filter === s}
+                  onClick={() => setFilter(s)}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
 
           <ul className="lanes">
             {visible.length === 0 && (
-              <li className="empty">No sprints for this filter.</li>
-            )}
-            {visible.map((sprint, index) => (
-              <li
-                key={sprint.id}
-                className={`ticket ticket--${sprint.status}`}
-                style={{ '--delay': `${index * 40}ms` }}
-              >
-                <div className="ticket-body">
-                  <div className="ticket-meta">
-                    <h3>{sprint.name}</h3>
-                    <span className={`pill pill--${sprint.status}`}>{sprint.status}</span>
-                  </div>
-                  <p className="ticket-goal">{sprint.goal}</p>
-                  <div className="ticket-cap">
-                    <span>Capacity</span>
-                    <b>
-                      {sprint.capacity === null || sprint.capacity === undefined
-                        ? '—'
-                        : sprint.capacity}
-                    </b>
-                  </div>
-                </div>
-                <div className="ticket-actions">
-                  <button type="button" className="btn btn-quiet" onClick={() => onEdit(sprint)}>
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-kill"
-                    onClick={() => onDelete(sprint.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
+              <li className="empty">
+                <strong>No sprints here</strong>
+                <span>Try another filter or compose a new sprint.</span>
               </li>
-            ))}
+            )}
+            {visible.map((sprint, index) => {
+              const cap =
+                sprint.capacity === null || sprint.capacity === undefined
+                  ? null
+                  : sprint.capacity;
+              const capPct = cap === null ? 0 : Math.min(100, Math.round((cap / 60) * 100));
+              return (
+                <li
+                  key={sprint.id}
+                  className={`ticket ticket--${sprint.status}${
+                    editingId === sprint.id ? ' is-editing' : ''
+                  }`}
+                  data-index={String(index + 1).padStart(2, '0')}
+                  style={{ '--delay': `${index * 45}ms` }}
+                >
+                  <div className="ticket-body">
+                    <div className="ticket-meta">
+                      <h3>{sprint.name}</h3>
+                      <span className={`pill pill--${sprint.status}`}>{sprint.status}</span>
+                    </div>
+                    <p className="ticket-goal">{sprint.goal}</p>
+                    <div className="ticket-cap">
+                      <div className="ticket-cap-row">
+                        <span>Capacity</span>
+                        <b>{cap === null ? '—' : cap}</b>
+                      </div>
+                      <div className="cap-track" aria-hidden="true">
+                        <span className="cap-fill" style={{ width: `${capPct}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="ticket-actions">
+                    <button type="button" className="btn btn-quiet" onClick={() => onEdit(sprint)}>
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-kill"
+                      onClick={() => onDelete(sprint.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </section>
       </div>
-    </div>
+    </main>
   );
 }
