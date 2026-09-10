@@ -2,52 +2,58 @@
 
 Service for planning sprints and retrospectives in Agile teams.
 
-Lab 7 (ITIVP): Socket.IO live retro rooms. Branch `27`.
+Lab 8 (ITIVP): Docker Compose full stack. Branch `28`.
 
 ## Layout
 
-- Backend (Labs 1–3, 6–7): project root (`npm run dev` → `http://localhost:3000`)
-- Frontend (Labs 4–5, 7): `client/` (Vite React → usually `http://localhost:5173`)
-- PostgreSQL: Sequelize routes `/sprints`, `/auth`
-- MongoDB: Mongoose `/mongo/sprints` + retro chat history (`retro_messages`)
-- WebSocket: Socket.IO on the same HTTP server (JWT required)
+- Backend (Labs 1–3, 6–8): project root (`http://localhost:3000`)
+- Frontend (Labs 4–5, 7–8): `client/` — Vite; in Docker served by nginx on `http://localhost`
+- PostgreSQL + MongoDB via Compose
+- WebSocket: Socket.IO on the backend HTTP server (JWT)
 
-## Backend
+## Docker (Lab 8) — recommended
+
+```bash
+cp .env.example .env
+# set JWT_SECRET in .env
+docker compose up --build
+```
+
+| URL | What |
+|-----|------|
+| http://localhost | React UI (nginx) |
+| http://localhost:3000/health | backend health |
+| http://localhost:3000 | REST + Socket.IO |
+
+Containers: `backend`, `frontend`, `db`, `mongo`.
+
+Extras: `.env` for secrets/URLs; `GET /health` + Compose healthchecks (`depends_on: service_healthy`).
+
+Images use `node:20-alpine` (Vite 8 needs Node ≥20; methodical sample used 18).
+
+Stop:
+
+```bash
+docker compose down
+```
+
+## Local backend (without app containers)
 
 ```bash
 npm install
-npm run db:up
+docker compose up -d db mongo
 cp .env.example .env
 npm run db:migrate
 npm run db:seed
 npm run dev
 ```
 
-`db:up` starts PostgreSQL (`:5433`) and MongoDB (`:27017`).
-
 Seed users (password `Password1!`):
 
 - `facilitator@agile.local`
 - `member@agile.local`
 
-### Socket.IO retro (Lab 7)
-
-Connect with `socket.io-client` and `auth: { token: <JWT from /auth/login> }`.
-
-Room: `retro:{sprintId}`
-
-| Event | Direction | Notes |
-|-------|-----------|--------|
-| `retro:join` | client → server | `{ sprintId }` → ack with users, cards, history |
-| `retro:leave` | client → server | leave room |
-| `retro:message` | both | chat text; persisted in Mongo |
-| `retro:typing` | both | `{ isTyping }` |
-| `retro:vote` | client → server | `{ cardId }` toggles your vote |
-| `retro:votes` | server → room | updated card tallies |
-| `retro:presence` | server → room | who is in the room |
-| `user:joined` / `user:left` | server → room | join/leave notices |
-
-## Frontend
+## Frontend (Vite, local)
 
 ```bash
 cd client
@@ -56,18 +62,12 @@ cp .env.example .env
 npm run dev
 ```
 
-1. Sign in (two browsers or two profiles: facilitator + member).
-2. Open the same sprint → **Open retro**.
-3. Chat, watch presence/typing, click vote buttons — tallies sync live.
+## Socket.IO retro (Lab 7)
 
-## Tests
-
-```bash
-npm test
-```
+Base: same origin as API (`VITE_API_URL`). Room: `retro:{sprintId}`.
 
 ## Compare PG vs Mongo
 
-- PostgreSQL: tables `Sprints` + `ActionItems` (FK)
-- MongoDB sprints: one document with embedded `actionItems[]`
-- MongoDB retro: `retro_messages` collection for Socket.IO chat history
+- PostgreSQL: tables `Sprints` + `ActionItems`
+- MongoDB sprints: embedded `actionItems[]`
+- MongoDB retro: `retro_messages` for Socket.IO chat history
