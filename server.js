@@ -1,6 +1,7 @@
 require('dotenv').config({ quiet: true });
 
 const express = require('express');
+const cors = require('cors');
 const { sequelize } = require('./models');
 const sprintsRouter = require('./routes/sprints');
 const authRouter = require('./routes/auth');
@@ -10,11 +11,11 @@ const { authenticate } = require('./middleware/auth');
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(cors());
 app.use(express.json());
 app.use('/auth', authRouter);
 app.get('/profile', authenticate, authController.profile);
 app.use('/sprints', sprintsRouter);
-
 app.use((req, res, next) => {
   next({ status: 404, message: 'Not found' });
 });

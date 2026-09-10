@@ -2,35 +2,14 @@
 
 Service for planning sprints and retrospectives in Agile teams.
 
-Lab 4 (ITIVP): React state (`useState` / `useEffect`) + `localStorage`. Branch `lab24`.
+Lab 5 (ITIVP): React client ↔ Express REST API (JWT). Branch `lab25`.
 
 ## Layout
 
-- Backend (Labs 1–3): project root (`npm run dev` → `:3000`)
-- Frontend (Lab 4): `client/` (Vite React)
+- Backend (Labs 1–3): project root (`npm run dev` → `http://localhost:3000`)
+- Frontend (Labs 4–5): `client/` (Vite React → usually `http://localhost:5173`)
 
-## Frontend (Lab 4)
-
-```bash
-cd client
-npm install
-npm run dev
-```
-
-Open the Vite URL (usually `http://localhost:5173`).
-
-Features:
-
-- Sprint list CRUD (add / edit / delete)
-- Filter by status
-- `useLocalStorage` with debounce 500 ms + cleanup
-- Fake 1 s loading on mount
-- `document.title` shows sprint count
-- Stats: total / planned / active / done
-
-Data key in `localStorage`: `agile-sprints`.
-
-## Backend (Labs 1–3)
+## Backend
 
 ```bash
 npm install
@@ -41,4 +20,28 @@ npm run db:seed
 npm run dev
 ```
 
-Server: `http://localhost:3000`
+Seed users (password `Password1!`):
+
+- `facilitator@agile.local` — can `DELETE /sprints/:id`
+- `member@agile.local` — JWT only; delete returns 403
+
+## Frontend
+
+```bash
+cd client
+npm install
+cp .env.example .env   # VITE_API_URL=http://localhost:3000
+npm run dev
+```
+
+Features (Lab 5):
+
+- Login → JWT in `localStorage` (`token`), axios Bearer interceptor
+- Sprint CRUD via API with optimistic updates + rollback
+- Loading / error + Retry
+- Extra: server `QUERY /sprints` search + status filter with debounce (~400 ms)
+- CORS enabled on Express
+
+## API base
+
+`VITE_API_URL` points at the server origin (no `/api` prefix). Paths: `/auth/login`, `/sprints`.

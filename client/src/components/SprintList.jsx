@@ -1,53 +1,113 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  addSprint,
+  deleteSprint,
+  fetchSprints,
+  getErrorMessage,
+  searchSprints,
+  updateSprint,
+} from '../api';
 
 const STATUSES = ['planned', 'active', 'done'];
 const FILTERS = ['all', ...STATUSES];
+const SEARCH_DEBOUNCE_MS = 400;
 
-const INITIAL_SPRINTS = [
-  {
-    id: 1,
-    name: 'Sprint 1',
-    goal: 'Ship backlog board',
-    status: 'done',
-    capacity: 30,
-  },
-  {
-    id: 2,
-    name: 'Sprint 2',
-    goal: 'Retrospective notes and action items',
-    status: 'active',
-    capacity: 35,
-  },
-];
+function todayInput() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function plusDaysInput(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function toInputDate(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toISOString().slice(0, 10);
+}
 
 const emptyForm = {
   name: '',
   goal: '',
   status: 'planned',
   capacity: '',
+  startDate: todayInput(),
+  endDate: plusDaysInput(14),
 };
 
-export default function SprintList() {
-  const [sprints, setSprints] = useLocalStorage(INITIAL_SPRINTS, 500);
+function toPayload(form) {
+  return {
+    name: form.name.trim(),
+    goal: form.goal.trim(),
+    status: form.status,
+    capacity: form.capacity === '' ? null : Number(form.capacity),
+    startDate: form.startDate,
+    endDate: form.endDate,
+  };
+}
+
+export default function SprintList({ onLogout, user }) {
+  const [sprints, setSprints] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null);
+  const requestId = useRef(0);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1000);
-    return () => clearTimeout(timer);
+  const loadList = useCallback(async () => {
+    const id = ++requestId.current;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await fetchSprints();
+      if (id !== requestId.current) return;
+      setSprints(Array.isArray(data) ? data : []);
+    } catch (err) {
+      if (id !== requestId.current) return;
+      setError(getErrorMessage(err));
+    } finally {
+      if (id === requestId.current) setLoading(false);
+    }
   }, []);
+
+  // Load / QUERY with debounce when search or status filter is active
+  useEffect(() => {
+    const q = search.trim();
+    const needsQuery = q !== '' || filter !== 'all';
+    const delay = needsQuery ? SEARCH_DEBOUNCE_MS : 0;
+    const timer = setTimeout(async () => {
+      const id = ++requestId.current;
+      setLoading(true);
+      setError(null);
+      try {
+        const { data } = needsQuery
+          ? await searchSprints({
+              ...(q ? { search: q } : {}),
+              ...(filter !== 'all' ? { status: filter } : {}),
+            })
+          : await fetchSprints();
+        if (id !== requestId.current) return;
+        setSprints(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (id !== requestId.current) return;
+        setError(getErrorMessage(err));
+      } finally {
+        if (id === requestId.current) setLoading(false);
+      }
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [search, filter]);
 
   useEffect(() => {
     document.title = `Sprints (${sprints.length}) | Agile Retro`;
   }, [sprints.length]);
-
-  const visible = useMemo(() => {
-    if (filter === 'all') return sprints;
-    return sprints.filter((s) => s.status === filter);
-  }, [sprints, filter]);
 
   const stats = useMemo(() => {
     return {
@@ -64,42 +124,59 @@ export default function SprintList() {
   }
 
   function resetForm() {
-    setForm(emptyForm);
+    setForm({
+      ...emptyForm,
+      startDate: todayInput(),
+      endDate: plusDaysInput(14),
+    });
     setEditingId(null);
   }
 
-  function onSubmit(e) {
-    e.preventDefault();
-    const name = form.name.trim();
-    const goal = form.goal.trim();
-    if (!name || !goal) return;
+  function showNotice(message) {
+    setNotice(message);
+    window.setTimeout(() => setNotice(null), 3500);
+  }
 
-    const capacity = form.capacity === '' ? null : Number(form.capacity);
-    if (capacity !== null && (!Number.isInteger(capacity) || capacity < 0)) {
+  async function onSubmit(e) {
+    e.preventDefault();
+    const payload = toPayload(form);
+    if (!payload.name || !payload.goal) return;
+    if (
+      payload.capacity !== null &&
+      (!Number.isInteger(payload.capacity) || payload.capacity < 0)
+    ) {
       return;
     }
 
     if (editingId !== null) {
+      const snapshot = sprints.find((s) => s.id === editingId);
       setSprints((prev) =>
-        prev.map((s) =>
-          s.id === editingId
-            ? { ...s, name, goal, status: form.status, capacity }
-            : s,
-        ),
+        prev.map((s) => (s.id === editingId ? { ...s, ...payload } : s)),
       );
-    } else {
-      setSprints((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          name,
-          goal,
-          status: form.status,
-          capacity,
-        },
-      ]);
+      try {
+        const { data } = await updateSprint(editingId, payload);
+        setSprints((prev) => prev.map((s) => (s.id === editingId ? data : s)));
+        resetForm();
+      } catch (err) {
+        if (snapshot) {
+          setSprints((prev) => prev.map((s) => (s.id === editingId ? snapshot : s)));
+        }
+        showNotice(getErrorMessage(err));
+      }
+      return;
     }
+
+    const tempId = Date.now();
+    const optimistic = { id: tempId, ...payload, actionItems: [] };
+    setSprints((prev) => [...prev, optimistic]);
     resetForm();
+    try {
+      const { data } = await addSprint(payload);
+      setSprints((prev) => prev.map((s) => (s.id === tempId ? data : s)));
+    } catch (err) {
+      setSprints((prev) => prev.filter((s) => s.id !== tempId));
+      showNotice(getErrorMessage(err));
+    }
   }
 
   function onEdit(sprint) {
@@ -109,15 +186,27 @@ export default function SprintList() {
       goal: sprint.goal,
       status: sprint.status,
       capacity: sprint.capacity ?? '',
+      startDate: toInputDate(sprint.startDate) || todayInput(),
+      endDate: toInputDate(sprint.endDate) || plusDaysInput(14),
     });
   }
 
-  function onDelete(id) {
+  async function onDelete(id) {
+    const snapshot = sprints.find((s) => s.id === id);
+    if (!snapshot) return;
     setSprints((prev) => prev.filter((s) => s.id !== id));
     if (editingId === id) resetForm();
+    try {
+      await deleteSprint(id);
+    } catch (err) {
+      setSprints((prev) =>
+        [...prev, snapshot].sort((a, b) => Number(a.id) - Number(b.id)),
+      );
+      showNotice(getErrorMessage(err));
+    }
   }
 
-  if (loading) {
+  if (loading && sprints.length === 0 && !error) {
     return (
       <div className="boot" role="status">
         <div className="boot-console">
@@ -127,8 +216,8 @@ export default function SprintList() {
             <span />
           </div>
           <div className="boot-copy">
-            <p>Initializing sprint control</p>
-            <span>Syncing local board…</span>
+            <p>Loading sprints from API</p>
+            <span>GET /sprints…</span>
           </div>
           <div className="boot-track" aria-hidden="true">
             <span />
@@ -148,32 +237,49 @@ export default function SprintList() {
             <h1>Sprint Control</h1>
           </div>
         </div>
-        <dl className="hud" aria-label="Sprint statistics">
-          <div className="hud-cell">
-            <dt>Total</dt>
-            <dd>{stats.total}</dd>
+        <div className="topbar-right">
+          <dl className="hud" aria-label="Sprint statistics">
+            <div className="hud-cell">
+              <dt>Total</dt>
+              <dd>{stats.total}</dd>
+            </div>
+            <div className="hud-cell">
+              <dt>Planned</dt>
+              <dd>{stats.planned}</dd>
+            </div>
+            <div className="hud-cell hud-cell--live">
+              <dt>Active</dt>
+              <dd>{stats.active}</dd>
+            </div>
+            <div className="hud-cell">
+              <dt>Done</dt>
+              <dd>{stats.done}</dd>
+            </div>
+          </dl>
+          <div className="session-bar">
+            <span className="session-user">
+              {user?.email || 'signed in'}
+              {user?.role ? ` · ${user.role}` : ''}
+            </span>
+            <button type="button" className="btn btn-quiet" onClick={onLogout}>
+              Log out
+            </button>
           </div>
-          <div className="hud-cell">
-            <dt>Planned</dt>
-            <dd>{stats.planned}</dd>
-          </div>
-          <div className="hud-cell hud-cell--live">
-            <dt>Active</dt>
-            <dd>{stats.active}</dd>
-          </div>
-          <div className="hud-cell">
-            <dt>Done</dt>
-            <dd>{stats.done}</dd>
-          </div>
-        </dl>
+        </div>
       </header>
+
+      {notice && (
+        <p className="banner banner--error room-banner" role="status">
+          {notice}
+        </p>
+      )}
 
       <div className="workspace">
         <aside className="rail" aria-labelledby="compose-title">
           <div className="rail-head">
             <p className="rail-tag">{editingId ? 'Edit mode' : 'Composer'}</p>
             <h2 id="compose-title">{editingId ? 'Edit sprint' : 'Compose sprint'}</h2>
-            <p>{editingId ? 'Update selected sprint' : 'Add to the board'}</p>
+            <p>{editingId ? 'Update on server' : 'POST to /sprints'}</p>
           </div>
 
           <form className="compose" onSubmit={onSubmit}>
@@ -222,6 +328,28 @@ export default function SprintList() {
                 />
               </label>
             </div>
+            <div className="compose-row">
+              <label>
+                Start
+                <input
+                  name="startDate"
+                  type="date"
+                  value={form.startDate}
+                  onChange={onChange}
+                  required
+                />
+              </label>
+              <label>
+                End
+                <input
+                  name="endDate"
+                  type="date"
+                  value={form.endDate}
+                  onChange={onChange}
+                  required
+                />
+              </label>
+            </div>
             <div className="compose-actions">
               <button type="submit" className="btn btn-main">
                 {editingId ? 'Save changes' : 'Add sprint'}
@@ -240,37 +368,59 @@ export default function SprintList() {
             <div>
               <h2 id="board-title">Sprint board</h2>
               <p>
-                {visible.length} shown · {stats.total} total
+                {sprints.length} shown
+                {loading ? ' · syncing…' : ''}
               </p>
             </div>
-            <div className="seg" role="group" aria-label="Filter by status">
-              {FILTERS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={`seg-btn${filter === s ? ' is-on' : ''}`}
-                  aria-pressed={filter === s}
-                  onClick={() => setFilter(s)}
-                >
-                  {s}
-                </button>
-              ))}
+            <div className="stage-tools">
+              <label className="search">
+                Search
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="name or goal"
+                />
+              </label>
+              <div className="seg" role="group" aria-label="Filter by status">
+                {FILTERS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className={`seg-btn${filter === s ? ' is-on' : ''}`}
+                    aria-pressed={filter === s}
+                    onClick={() => setFilter(s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
+          {error && (
+            <div className="banner banner--error" role="alert">
+              <span>{error}</span>
+              <button type="button" className="btn btn-quiet" onClick={loadList}>
+                Retry
+              </button>
+            </div>
+          )}
+
           <ul className="lanes">
-            {visible.length === 0 && (
+            {!error && sprints.length === 0 && (
               <li className="empty">
                 <strong>No sprints here</strong>
                 <span>Try another filter or compose a new sprint.</span>
               </li>
             )}
-            {visible.map((sprint, index) => {
+            {sprints.map((sprint, index) => {
               const cap =
                 sprint.capacity === null || sprint.capacity === undefined
                   ? null
                   : sprint.capacity;
-              const capPct = cap === null ? 0 : Math.min(100, Math.round((cap / 60) * 100));
+              const capPct =
+                cap === null ? 0 : Math.min(100, Math.round((cap / 60) * 100));
               return (
                 <li
                   key={sprint.id}
@@ -286,6 +436,9 @@ export default function SprintList() {
                       <span className={`pill pill--${sprint.status}`}>{sprint.status}</span>
                     </div>
                     <p className="ticket-goal">{sprint.goal}</p>
+                    <p className="ticket-dates">
+                      {toInputDate(sprint.startDate)} → {toInputDate(sprint.endDate)}
+                    </p>
                     <div className="ticket-cap">
                       <div className="ticket-cap-row">
                         <span>Capacity</span>
