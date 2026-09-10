@@ -11,7 +11,11 @@ const { authenticate } = require('./middleware/auth');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(
+  cors({
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'QUERY', 'OPTIONS'],
+  }),
+);
 app.use(express.json());
 app.use('/auth', authRouter);
 app.get('/profile', authenticate, authController.profile);
@@ -27,8 +31,12 @@ app.use((err, req, res, next) => {
 
 async function start() {
   await sequelize.authenticate();
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     console.log('Server running...');
+  });
+  server.on('error', (err) => {
+    console.error('Unable to start server:', err.message);
+    process.exit(1);
   });
 }
 

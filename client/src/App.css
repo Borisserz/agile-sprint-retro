@@ -378,7 +378,8 @@ body {
   padding: var(--space-lg);
   position: sticky;
   top: var(--space-md);
-  overflow: clip;
+  overflow: visible;
+  min-width: 0;
 }
 
 .rail::before {
@@ -422,12 +423,18 @@ body {
   margin-top: var(--space-lg);
   display: grid;
   gap: var(--space-md);
+  min-width: 0;
 }
 
 .compose-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-sm);
+  min-width: 0;
+}
+
+.compose-row > label {
+  min-width: 0;
 }
 
 label {
@@ -451,6 +458,8 @@ input,
 select,
 textarea {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 2.75rem;
   border: 1px solid var(--color-line);
   border-radius: var(--radius-control);
