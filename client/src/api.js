@@ -40,6 +40,10 @@ export function deleteSprint(id) {
   return api.delete(`/sprints/${id}`);
 }
 
+export function fetchProfile() {
+  return api.get('/profile');
+}
+
 export function getErrorMessage(err) {
   return err?.response?.data?.error || err?.message || 'Request failed';
 }

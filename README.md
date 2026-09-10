@@ -2,14 +2,15 @@
 
 Service for planning sprints and retrospectives in Agile teams.
 
-Lab 6 (ITIVP): MongoDB + Mongoose parallel API. Branch `lab26`.
+Lab 7 (ITIVP): Socket.IO live retro rooms. Branch `27`.
 
 ## Layout
 
-- Backend (Labs 1–3, 6): project root (`npm run dev` → `http://localhost:3000`)
-- Frontend (Labs 4–5): `client/` (Vite React → usually `http://localhost:5173`)
+- Backend (Labs 1–3, 6–7): project root (`npm run dev` → `http://localhost:3000`)
+- Frontend (Labs 4–5, 7): `client/` (Vite React → usually `http://localhost:5173`)
 - PostgreSQL: Sequelize routes `/sprints`, `/auth`
-- MongoDB: Mongoose routes `/mongo/sprints` (nested `actionItems`, `tags`)
+- MongoDB: Mongoose `/mongo/sprints` + retro chat history (`retro_messages`)
+- WebSocket: Socket.IO on the same HTTP server (JWT required)
 
 ## Backend
 
@@ -24,42 +25,27 @@ npm run dev
 
 `db:up` starts PostgreSQL (`:5433`) and MongoDB (`:27017`).
 
-Seed users for PG API (password `Password1!`):
+Seed users (password `Password1!`):
 
-- `facilitator@agile.local` — can `DELETE /sprints/:id`
-- `member@agile.local` — JWT only; delete returns 403
+- `facilitator@agile.local`
+- `member@agile.local`
 
-### Mongo API (Lab 6)
+### Socket.IO retro (Lab 7)
 
-Base: `http://localhost:3000/mongo/sprints`
+Connect with `socket.io-client` and `auth: { token: <JWT from /auth/login> }`.
 
-| Method | Path | Notes |
-|--------|------|--------|
-| GET | `/mongo/sprints` | list documents |
-| GET | `/mongo/sprints/:id` | by ObjectId |
-| POST | `/mongo/sprints` | create (optional `tags`, `actionItems`) |
-| PUT | `/mongo/sprints/:id` | update fields / nested arrays |
-| DELETE | `/mongo/sprints/:id` | delete, returns document |
-| POST | `/mongo/sprints/:id/action-items` | `$push` nested item |
-| PATCH | `/mongo/sprints/:id/action-items/:itemId` | update one subdocument |
-| DELETE | `/mongo/sprints/:id/action-items/:itemId` | `$pull` nested item |
+Room: `retro:{sprintId}`
 
-Example create body:
-
-```json
-{
-  "name": "Sprint Mongo",
-  "goal": "Document store for action items",
-  "startDate": "2026-09-10",
-  "endDate": "2026-09-24",
-  "status": "planned",
-  "capacity": 40,
-  "tags": ["retro", "mongo"],
-  "actionItems": []
-}
-```
-
-`MONGO_URI` defaults to local Docker. For Atlas, put the cluster connection string in `.env`.
+| Event | Direction | Notes |
+|-------|-----------|--------|
+| `retro:join` | client → server | `{ sprintId }` → ack with users, cards, history |
+| `retro:leave` | client → server | leave room |
+| `retro:message` | both | chat text; persisted in Mongo |
+| `retro:typing` | both | `{ isTyping }` |
+| `retro:vote` | client → server | `{ cardId }` toggles your vote |
+| `retro:votes` | server → room | updated card tallies |
+| `retro:presence` | server → room | who is in the room |
+| `user:joined` / `user:left` | server → room | join/leave notices |
 
 ## Frontend
 
@@ -70,9 +56,18 @@ cp .env.example .env
 npm run dev
 ```
 
-Lab 5 client still uses PostgreSQL `/sprints` (not `/mongo`).
+1. Sign in (two browsers or two profiles: facilitator + member).
+2. Open the same sprint → **Open retro**.
+3. Chat, watch presence/typing, click vote buttons — tallies sync live.
+
+## Tests
+
+```bash
+npm test
+```
 
 ## Compare PG vs Mongo
 
-- PostgreSQL: tables `Sprints` + `ActionItems` (FK), Sequelize `include`
-- MongoDB: one document with embedded `actionItems[]` — no JOIN
+- PostgreSQL: tables `Sprints` + `ActionItems` (FK)
+- MongoDB sprints: one document with embedded `actionItems[]`
+- MongoDB retro: `retro_messages` collection for Socket.IO chat history

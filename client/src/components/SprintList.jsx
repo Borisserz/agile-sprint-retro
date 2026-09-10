@@ -7,6 +7,7 @@ import {
   searchSprints,
   updateSprint,
 } from '../api';
+import RetroBoard from './RetroBoard';
 
 const STATUSES = ['planned', 'active', 'done'];
 const FILTERS = ['all', ...STATUSES];
@@ -58,6 +59,7 @@ export default function SprintList({ onLogout, user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
+  const [retroSprint, setRetroSprint] = useState(null);
   const requestId = useRef(0);
 
   const loadList = useCallback(async () => {
@@ -450,6 +452,13 @@ export default function SprintList({ onLogout, user }) {
                     </div>
                   </div>
                   <div className="ticket-actions">
+                    <button
+                      type="button"
+                      className="btn btn-main"
+                      onClick={() => setRetroSprint(sprint)}
+                    >
+                      Open retro
+                    </button>
                     <button type="button" className="btn btn-quiet" onClick={() => onEdit(sprint)}>
                       Edit
                     </button>
@@ -467,6 +476,14 @@ export default function SprintList({ onLogout, user }) {
           </ul>
         </section>
       </div>
+
+      {retroSprint && (
+        <RetroBoard
+          sprint={retroSprint}
+          user={user}
+          onClose={() => setRetroSprint(null)}
+        />
+      )}
     </main>
   );
 }
