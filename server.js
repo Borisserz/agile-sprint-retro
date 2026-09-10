@@ -3,7 +3,9 @@ require('dotenv').config({ quiet: true });
 const express = require('express');
 const cors = require('cors');
 const { sequelize } = require('./models');
+const { connectMongo } = require('./config/mongo');
 const sprintsRouter = require('./routes/sprints');
+const mongoSprintsRouter = require('./routes/mongoSprints');
 const authRouter = require('./routes/auth');
 const authController = require('./controllers/authController');
 const { authenticate } = require('./middleware/auth');
@@ -20,6 +22,7 @@ app.use(express.json());
 app.use('/auth', authRouter);
 app.get('/profile', authenticate, authController.profile);
 app.use('/sprints', sprintsRouter);
+app.use('/mongo/sprints', mongoSprintsRouter);
 app.use((req, res, next) => {
   next({ status: 404, message: 'Not found' });
 });
@@ -31,6 +34,7 @@ app.use((err, req, res, next) => {
 
 async function start() {
   await sequelize.authenticate();
+  await connectMongo();
   const server = app.listen(port, () => {
     console.log('Server running...');
   });
