@@ -38,8 +38,10 @@ services:
     environment:
       PORT: 3000
       NODE_ENV: production
+      RUN_SEEDS: "true"
       DATABASE_URL: postgres://postgres:postgres@db:5432/agile_sprint_retro
       MONGO_URI: mongodb://mongo:27017/agile_sprint_retro
+      CORS_ORIGINS: http://localhost,http://localhost:5173
     depends_on:
       db:
         condition: service_healthy

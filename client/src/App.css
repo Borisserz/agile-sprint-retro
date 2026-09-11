@@ -19,8 +19,8 @@
   --color-danger: oklch(52% 0.18 25);
   --color-danger-surface: oklch(95% 0.03 25);
   --color-focus: oklch(55% 0.12 210);
-  --color-glow: oklch(70% 0.12 245 / 0.22);
-  --shadow-panel: 0 18px 44px oklch(40% 0.03 255 / 0.12);
+  --color-glow: oklch(70% 0.08 245 / 0.12);
+  --shadow-panel: 0 10px 28px oklch(40% 0.03 255 / 0.1);
   --radius-panel: 12px;
   --radius-control: 7px;
   --font-display: "Bricolage Grotesque", sans-serif;
@@ -293,7 +293,7 @@ body {
   height: 2.85rem;
   background: linear-gradient(180deg, var(--color-accent), var(--color-active));
   clip-path: polygon(0 0, 100% 0, 100% 76%, 50% 100%, 0 76%);
-  box-shadow: 0 0 24px var(--color-glow);
+  box-shadow: none;
 }
 
 .brand-kicker {

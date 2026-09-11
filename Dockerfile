@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx sequelize-cli db:migrate && (npx sequelize-cli db:seed:all || true) && node server.js"]
+CMD ["sh", "-c", "npx sequelize-cli db:migrate && if [ \"$RUN_SEEDS\" = \"true\" ]; then npx sequelize-cli db:seed:all || true; fi && node server.js"]
