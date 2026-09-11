@@ -3,8 +3,11 @@ require('dotenv').config({ quiet: true });
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const { sequelize } = require('./models');
 const { connectMongo } = require('./config/mongo');
+const { createCorsOptions } = require('./config/cors');
+const { assertJwtConfiguration } = require('./config/jwt');
 const sprintsRouter = require('./routes/sprints');
 const mongoSprintsRouter = require('./routes/mongoSprints');
 const authRouter = require('./routes/auth');
@@ -15,11 +18,8 @@ const { attachSockets } = require('./socket');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(
-  cors({
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'QUERY', 'OPTIONS'],
-  }),
-);
+app.use(helmet());
+app.use(cors(createCorsOptions()));
 app.use(express.json());
 app.use('/auth', authRouter);
 app.get('/health', (req, res) => {
@@ -38,6 +38,7 @@ app.use((err, req, res, next) => {
 });
 
 async function start() {
+  assertJwtConfiguration();
   await sequelize.authenticate();
   await connectMongo();
 

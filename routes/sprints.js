@@ -13,8 +13,8 @@ router.all('/', (req, res, next) => {
 
 router.get('/', controller.getAll);
 router.get('/:id', controller.getById);
-router.post('/', controller.create);
-router.put('/:id', controller.update);
+router.post('/', authenticate, controller.create);
+router.put('/:id', authenticate, controller.update);
 router.delete('/:id', authenticate, requireRole('facilitator'), controller.remove);
 
 module.exports = router;

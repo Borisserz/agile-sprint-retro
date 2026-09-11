@@ -9,7 +9,7 @@ const { attachRetroHandlers } = require('../socket/retroHandlers');
 const { resetRoomsForTests } = require('../socket/roomState');
 
 test('two clients share chat and votes in a retro room', async (t) => {
-  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-lab7';
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-with-at-least-32-characters';
   resetRoomsForTests();
 
   const originalCreate = require('../models/mongo/RetroMessage').RetroMessage.create;
@@ -62,7 +62,12 @@ test('two clients share chat and votes in a retro room', async (t) => {
   const { port } = server.address();
 
   function clientFor(user) {
-    const token = jwt.sign(user, process.env.JWT_SECRET);
+    // Isolated harness signs its own tokens; production uses config/jwt.js.
+    const token = jwt.sign(user, process.env.JWT_SECRET, {
+      issuer: 'agile-sprint-retro',
+      audience: 'agile-sprint-retro-web',
+      expiresIn: '1h',
+    });
     return ioc(`http://127.0.0.1:${port}`, {
       auth: { token },
       transports: ['websocket'],

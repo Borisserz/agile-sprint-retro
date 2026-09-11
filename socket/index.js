@@ -1,13 +1,11 @@
 const { Server } = require('socket.io');
-const jwt = require('jsonwebtoken');
+const { createSocketCorsOptions } = require('../config/cors');
+const { verifyAccessToken } = require('../config/jwt');
 const { attachRetroHandlers } = require('./retroHandlers');
 
 function attachSockets(httpServer) {
   const io = new Server(httpServer, {
-    cors: {
-      origin: true,
-      methods: ['GET', 'POST'],
-    },
+    cors: createSocketCorsOptions(),
   });
 
   io.use((socket, next) => {
@@ -19,13 +17,8 @@ function attachSockets(httpServer) {
       return next(new Error('Authorization token required'));
     }
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      return next(new Error('JWT_SECRET is not configured'));
-    }
-
     try {
-      const decoded = jwt.verify(token, secret);
+      const decoded = verifyAccessToken(token);
       socket.data.user = {
         id: decoded.id,
         email: decoded.email,
@@ -33,6 +26,9 @@ function attachSockets(httpServer) {
       };
       return next();
     } catch (err) {
+      if (err.status === 500) {
+        return next(err);
+      }
       return next(new Error('Invalid or expired token'));
     }
   });

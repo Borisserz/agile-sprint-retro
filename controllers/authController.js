@@ -1,32 +1,23 @@
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const { User, Sequelize } = require('../models');
+const { signAccessToken } = require('../config/jwt');
 
 const BCRYPT_ROUNDS = 10;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
 
 function validateCredentials(email, password) {
   if (!email || typeof email !== 'string' || !EMAIL_RE.test(email.trim())) {
     return 'valid email is required';
   }
-  if (!password || typeof password !== 'string' || password.length < 6) {
-    return 'password must be at least 6 characters';
+  if (!password || typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
+    return `password must be at least ${MIN_PASSWORD_LENGTH} characters`;
   }
   return null;
 }
 
 function signToken(user) {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    const err = new Error('JWT_SECRET is not configured');
-    err.status = 500;
-    throw err;
-  }
-  return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    secret,
-    { expiresIn: '1h' }
-  );
+  return signAccessToken({ id: user.id, email: user.email, role: user.role });
 }
 
 async function register(req, res, next) {
@@ -85,8 +76,15 @@ async function changePassword(req, res, next) {
     if (!oldPassword || typeof oldPassword !== 'string') {
       return next({ status: 400, message: 'oldPassword is required' });
     }
-    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
-      return next({ status: 400, message: 'newPassword must be at least 6 characters' });
+    if (
+      !newPassword
+      || typeof newPassword !== 'string'
+      || newPassword.length < MIN_PASSWORD_LENGTH
+    ) {
+      return next({
+        status: 400,
+        message: `newPassword must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      });
     }
 
     const user = await User.findByPk(req.user.id);

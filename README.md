@@ -2,7 +2,13 @@
 
 Service for planning sprints and retrospectives in Agile teams.
 
-Lab 8 (ITIVP): Docker Compose full stack. Branch `28`.
+## Coursework product
+
+Branch `kp` develops the coursework product from Lab 8 (`origin/28`, commit `0e72ea5`).
+
+Current status: implementation in progress. Public deployment URLs are recorded here only after successful smoke testing.
+
+Lab 8 (ITIVP): Docker Compose full stack. Historical lab tip: branch `28`.
 
 ## Layout
 
