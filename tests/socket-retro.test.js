@@ -7,6 +7,51 @@ const { Server } = require('socket.io');
 const { io: ioc } = require('socket.io-client');
 const { attachRetroHandlers } = require('../socket/retroHandlers');
 const { resetRoomsForTests } = require('../socket/roomState');
+const { createRetroCardStore } = require('../socket/retroCardStore');
+
+function createFakeCardModel() {
+  const docs = [];
+  let seq = 1;
+  class Doc {
+    constructor(data) {
+      Object.assign(this, data);
+      this._id = data._id || `c${seq++}`;
+    }
+    async save() {
+      return this;
+    }
+    async deleteOne() {
+      const idx = docs.findIndex((d) => d._id === this._id);
+      if (idx >= 0) docs.splice(idx, 1);
+    }
+  }
+  return {
+    async countDocuments(query) {
+      return docs.filter((d) => d.sprintId === query.sprintId).length;
+    },
+    async find(query) {
+      const rows = docs.filter((d) => d.sprintId === query.sprintId);
+      const promise = Promise.resolve(rows);
+      promise.sort = async () => rows;
+      return promise;
+    },
+    async updateOne(filter, update) {
+      const exists = docs.find(
+        (d) => d.sprintId === filter.sprintId && d.templateKey === filter.templateKey,
+      );
+      if (!exists) docs.push(new Doc({ ...filter, ...update.$setOnInsert }));
+      return { upsertedCount: exists ? 0 : 1 };
+    },
+    async create(payload) {
+      const doc = new Doc(payload);
+      docs.push(doc);
+      return doc;
+    },
+    async findById(id) {
+      return docs.find((d) => String(d._id) === String(id)) || null;
+    },
+  };
+}
 
 test('two clients share chat and votes in a retro room', async (t) => {
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-with-at-least-32-characters';
@@ -56,7 +101,8 @@ test('two clients share chat and votes in a retro room', async (t) => {
     }
   });
 
-  io.on('connection', (socket) => attachRetroHandlers(io, socket));
+  const cardStore = createRetroCardStore(createFakeCardModel());
+  io.on('connection', (socket) => attachRetroHandlers(io, socket, { cardStore }));
 
   await new Promise((resolve) => server.listen(0, resolve));
   const { port } = server.address();

@@ -1303,6 +1303,13 @@ textarea:disabled {
   color: var(--color-text);
 }
 
+.retro-card-actions {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .retro-compose input:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 1px;

@@ -28,6 +28,12 @@ export default function RetroBoard({ sprint, user, onClose }) {
   const typingTimer = useRef(null);
   const remoteTypingTimer = useRef(null);
 
+  const [cardDrafts, setCardDrafts] = useState({
+    'went-well': '',
+    improve: '',
+    action: '',
+  });
+
   const myId = user?.id;
 
   const cardsByColumn = useMemo(() => {
@@ -112,6 +118,10 @@ export default function RetroBoard({ sprint, user, onClose }) {
       setCards(payload.cards || []);
     }
 
+    function onCards(payload) {
+      setCards(payload.cards || []);
+    }
+
     function onTyping(payload) {
       if (!payload?.email || payload.email === user?.email) return;
       if (payload.isTyping) {
@@ -130,6 +140,7 @@ export default function RetroBoard({ sprint, user, onClose }) {
     socket.on('user:left', onLeft);
     socket.on('retro:message', onMessage);
     socket.on('retro:votes', onVotes);
+    socket.on('retro:cards', onCards);
     socket.on('retro:typing', onTyping);
 
     if (socket.connected) onConnect();
@@ -146,6 +157,7 @@ export default function RetroBoard({ sprint, user, onClose }) {
       socket.off('user:left', onLeft);
       socket.off('retro:message', onMessage);
       socket.off('retro:votes', onVotes);
+      socket.off('retro:cards', onCards);
       socket.off('retro:typing', onTyping);
       socket.emit('retro:leave');
     };
@@ -188,6 +200,29 @@ export default function RetroBoard({ sprint, user, onClose }) {
     const socket = getSocket();
     socket.emit('retro:vote', { cardId }, (res) => {
       if (res?.error) setError(res.error);
+      else if (res?.cards) setCards(res.cards);
+    });
+  }
+
+  function onAddCard(column, e) {
+    e.preventDefault();
+    const text = (cardDrafts[column] || '').trim();
+    if (!text) return;
+    const socket = getSocket();
+    socket.emit('retro:card:create', { column, text }, (res) => {
+      if (res?.error) setError(res.error);
+      else if (res?.cards) {
+        setCards(res.cards);
+        setCardDrafts((prev) => ({ ...prev, [column]: '' }));
+      }
+    });
+  }
+
+  function onDeleteCard(cardId) {
+    const socket = getSocket();
+    socket.emit('retro:card:delete', { cardId }, (res) => {
+      if (res?.error) setError(res.error);
+      else if (res?.cards) setCards(res.cards);
     });
   }
 
@@ -239,22 +274,52 @@ export default function RetroBoard({ sprint, user, onClose }) {
                   <ul>
                     {(cardsByColumn[col.id] || []).map((card) => {
                       const mine = card.voterIds?.includes(myId);
+                      const canDelete =
+                        card.authorId === myId || user?.role === 'facilitator';
                       return (
                         <li key={card.id} className={`retro-card${mine ? ' is-voted' : ''}`}>
                           <p>{card.text}</p>
-                          <button
-                            type="button"
-                            className="retro-vote"
-                            onClick={() => onVote(card.id)}
-                            aria-pressed={Boolean(mine)}
-                          >
-                            <span aria-hidden="true">+</span>
-                            {card.votes || 0}
-                          </button>
+                          <div className="retro-card-actions">
+                            <button
+                              type="button"
+                              className="retro-vote"
+                              onClick={() => onVote(card.id)}
+                              aria-pressed={Boolean(mine)}
+                              disabled={status !== 'live'}
+                            >
+                              <span aria-hidden="true">+</span>
+                              {card.votes || 0}
+                            </button>
+                            {canDelete && (
+                              <button
+                                type="button"
+                                className="btn btn-quiet"
+                                onClick={() => onDeleteCard(card.id)}
+                                disabled={status !== 'live'}
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
                         </li>
                       );
                     })}
                   </ul>
+                  <form className="retro-compose" onSubmit={(e) => onAddCard(col.id, e)}>
+                    <input
+                      value={cardDrafts[col.id]}
+                      onChange={(e) =>
+                        setCardDrafts((prev) => ({ ...prev, [col.id]: e.target.value }))
+                      }
+                      placeholder={`Add to ${col.title}`}
+                      maxLength={500}
+                      disabled={status !== 'live'}
+                      aria-label={`Add card to ${col.title}`}
+                    />
+                    <button type="submit" className="btn btn-quiet" disabled={status !== 'live'}>
+                      Add
+                    </button>
+                  </form>
                 </div>
               ))}
             </div>
