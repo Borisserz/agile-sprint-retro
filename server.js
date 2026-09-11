@@ -11,6 +11,8 @@ const authRouter = require('./routes/auth');
 const authController = require('./controllers/authController');
 const { authenticate } = require('./middleware/auth');
 const { attachSockets } = require('./socket');
+// ПЗ2: REST API в памяти (документация — API.md)
+const { mountPz2Api } = require('./routes/pz2Api');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -28,6 +30,7 @@ app.get('/health', (req, res) => {
 app.get('/profile', authenticate, authController.profile);
 app.use('/sprints', sprintsRouter);
 app.use('/mongo/sprints', mongoSprintsRouter);
+mountPz2Api(app);
 app.use((req, res, next) => {
   next({ status: 404, message: 'Not found' });
 });

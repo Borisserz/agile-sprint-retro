@@ -2,7 +2,7 @@
 
 Service for planning sprints and retrospectives in Agile teams.
 
-Lab 8 (ITIVP): Docker Compose full stack. Branch `28`.
+Practical 2 (ITIVP): in-memory REST API. Branch `pz22` (from lab `28`). See `API.md`.
 
 ## Layout
 
@@ -10,6 +10,16 @@ Lab 8 (ITIVP): Docker Compose full stack. Branch `28`.
 - Frontend (Labs 4–5, 7–8): `client/` — Vite; in Docker served by nginx on `http://localhost`
 - PostgreSQL + MongoDB via Compose
 - WebSocket: Socket.IO on the backend HTTP server (JWT)
+- **ПЗ2:** `/api/sprints`, `/api/action-items`, `/api/retrospectives` (arrays in memory)
+
+## Practical 2 — REST (branch `pz22`)
+
+```bash
+npm run dev
+# Postman: GET/POST/PUT/PATCH/DELETE http://localhost:3000/api/sprints
+```
+
+Full endpoint list and examples: [`API.md`](./API.md).
 
 ## Docker (Lab 8) — recommended
 
