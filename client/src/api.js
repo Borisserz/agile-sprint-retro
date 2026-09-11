@@ -52,6 +52,18 @@ export function deleteSprint(id) {
   return api.delete(`/sprints/${id}`);
 }
 
+export function addActionItem(sprintId, title) {
+  return api.post(`/sprints/${sprintId}/action-items`, { title });
+}
+
+export function updateActionItem(sprintId, itemId, changes) {
+  return api.patch(`/sprints/${sprintId}/action-items/${itemId}`, changes);
+}
+
+export function deleteActionItem(sprintId, itemId) {
+  return api.delete(`/sprints/${sprintId}/action-items/${itemId}`);
+}
+
 export function fetchProfile() {
   return api.get('/profile');
 }

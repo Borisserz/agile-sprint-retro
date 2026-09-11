@@ -8,6 +8,7 @@ import {
   searchSprints,
   updateSprint,
 } from '../api';
+import ActionItems from './ActionItems';
 
 const STATUSES = ['planned', 'active', 'done'];
 const FILTERS = ['all', ...STATUSES];
@@ -450,6 +451,17 @@ export default function SprintList({ onLogout, user }) {
                         <span className="cap-fill" style={{ width: `${capPct}%` }} />
                       </div>
                     </div>
+                    <ActionItems
+                      sprintId={sprint.id}
+                      items={sprint.actionItems}
+                      onItemsChange={(nextItems) => {
+                        setSprints((prev) =>
+                          prev.map((row) =>
+                            row.id === sprint.id ? { ...row, actionItems: nextItems } : row,
+                          ),
+                        );
+                      }}
+                    />
                   </div>
                   <div className="ticket-actions">
                     <button
