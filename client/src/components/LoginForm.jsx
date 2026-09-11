@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { getErrorMessage, login } from '../api';
+import { Link } from 'react-router-dom';
+import { getErrorMessage } from '../api';
+import { useAuth } from '../context/AuthContext';
 
-export default function LoginForm({ onSuccess }) {
+export default function LoginForm({ onSignedIn }) {
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('facilitator@agile.local');
   const [password, setPassword] = useState('Password1!');
   const [loading, setLoading] = useState(false);
@@ -12,9 +15,8 @@ export default function LoginForm({ onSuccess }) {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await login(email.trim(), password);
-      localStorage.setItem('token', data.token);
-      onSuccess(data);
+      await signIn(email.trim(), password);
+      onSignedIn?.();
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -65,6 +67,8 @@ export default function LoginForm({ onSuccess }) {
           </div>
           <p className="login-hint">
             Seed facilitator: <code>facilitator@agile.local</code> / <code>Password1!</code>
+            {' · '}
+            <Link to="/register">Create account</Link>
           </p>
         </form>
       </section>

@@ -1,49 +1,16 @@
-import { useEffect, useState } from 'react';
-import LoginForm from './components/LoginForm';
-import SprintList from './components/SprintList';
-import { fetchProfile, getErrorMessage } from './api';
-import { disconnectSocket } from './socket';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import PrivateRoute from './routes/PrivateRoute';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import SprintsPage from './pages/SprintsPage';
+import RetroPage from './pages/RetroPage';
+import NotFoundPage from './pages/NotFoundPage';
+import { useAuth } from './context/AuthContext';
 import './App.css';
 
-export default function App() {
-  const [session, setSession] = useState(() => {
-    const token = localStorage.getItem('token');
-    return token ? { token, user: null } : null;
-  });
-  const [bootError, setBootError] = useState(null);
-
-  useEffect(() => {
-    if (!session) {
-      document.title = 'Sprint Control | Sign in';
-      return;
-    }
-    document.title = 'Sprint Control';
-    if (session.user) return undefined;
-
-    let cancelled = false;
-    fetchProfile()
-      .then(({ data }) => {
-        if (!cancelled) setSession((prev) => (prev ? { ...prev, user: data } : prev));
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        localStorage.removeItem('token');
-        disconnectSocket();
-        setSession(null);
-        setBootError(getErrorMessage(err));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [session]);
-
-  function onLogout() {
-    localStorage.removeItem('token');
-    disconnectSocket();
-    setSession(null);
-  }
-
-  if (session && !session.user) {
+function HomeRedirect() {
+  const { status } = useAuth();
+  if (status === 'loading') {
     return (
       <div className="viewport">
         <div className="viewport-bg" aria-hidden="true" />
@@ -58,25 +25,32 @@ export default function App() {
       </div>
     );
   }
+  return <Navigate to={status === 'authenticated' ? '/sprints' : '/login'} replace />;
+}
 
+export default function App() {
   return (
-    <div className="viewport">
-      <div className="viewport-bg" aria-hidden="true" />
-      {session ? (
-        <SprintList onLogout={onLogout} user={session.user} />
-      ) : (
-        <LoginForm
-          onSuccess={(data) => {
-            setBootError(null);
-            setSession({ token: data.token, user: data.user });
-          }}
-        />
-      )}
-      {bootError && !session && (
-        <p className="banner banner--error" style={{ position: 'fixed', bottom: 16, left: 16 }}>
-          {bootError}
-        </p>
-      )}
-    </div>
+    <Routes>
+      <Route path="/" element={<HomeRedirect />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route
+        path="/sprints"
+        element={
+          <PrivateRoute>
+            <SprintsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/sprints/:id/retro"
+        element={
+          <PrivateRoute>
+            <RetroPage />
+          </PrivateRoute>
+        }
+      />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   );
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   addSprint,
   deleteSprint,
@@ -7,7 +8,6 @@ import {
   searchSprints,
   updateSprint,
 } from '../api';
-import RetroBoard from './RetroBoard';
 
 const STATUSES = ['planned', 'active', 'done'];
 const FILTERS = ['all', ...STATUSES];
@@ -51,6 +51,7 @@ function toPayload(form) {
 }
 
 export default function SprintList({ onLogout, user }) {
+  const navigate = useNavigate();
   const [sprints, setSprints] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
@@ -59,7 +60,6 @@ export default function SprintList({ onLogout, user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
-  const [retroSprint, setRetroSprint] = useState(null);
   const requestId = useRef(0);
 
   const loadList = useCallback(async () => {
@@ -455,7 +455,7 @@ export default function SprintList({ onLogout, user }) {
                     <button
                       type="button"
                       className="btn btn-main"
-                      onClick={() => setRetroSprint(sprint)}
+                      onClick={() => navigate(`/sprints/${sprint.id}/retro`)}
                     >
                       Open retro
                     </button>
@@ -476,14 +476,6 @@ export default function SprintList({ onLogout, user }) {
           </ul>
         </section>
       </div>
-
-      {retroSprint && (
-        <RetroBoard
-          sprint={retroSprint}
-          user={user}
-          onClose={() => setRetroSprint(null)}
-        />
-      )}
     </main>
   );
 }

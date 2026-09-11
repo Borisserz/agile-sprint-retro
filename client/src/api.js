@@ -16,8 +16,20 @@ export function login(email, password) {
   return api.post('/auth/login', { email, password });
 }
 
+export function register(email, password) {
+  return api.post('/auth/register', { email, password });
+}
+
+export function changePassword(oldPassword, newPassword) {
+  return api.post('/auth/change-password', { oldPassword, newPassword });
+}
+
 export function fetchSprints() {
   return api.get('/sprints');
+}
+
+export function fetchSprint(id) {
+  return api.get(`/sprints/${id}`);
 }
 
 /** Server-side search/filter via HTTP QUERY (Lab 1 endpoint). */
