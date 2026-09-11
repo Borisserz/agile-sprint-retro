@@ -32,12 +32,15 @@ export function fetchSprint(id) {
   return api.get(`/sprints/${id}`);
 }
 
-/** Server-side search/filter via HTTP QUERY (Lab 1 endpoint). */
+/**
+ * Server-side search/filter.
+ * Uses GET query params (CDN-safe). HTTP QUERY remains on the API for Lab 1 demos.
+ */
 export function searchSprints({ search, status } = {}) {
-  const body = {};
-  if (search !== undefined && search !== '') body.search = search;
-  if (status !== undefined && status !== 'all') body.status = status;
-  return api.request({ method: 'QUERY', url: '/sprints', data: body });
+  const params = {};
+  if (search !== undefined && search !== '') params.search = search;
+  if (status !== undefined && status !== 'all') params.status = status;
+  return api.get('/sprints', { params });
 }
 
 export function addSprint(item) {

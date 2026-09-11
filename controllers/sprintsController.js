@@ -49,12 +49,60 @@ function parseSprintBody(body) {
   };
 }
 
+function buildSearchWhere({ search, status }) {
+  if (search !== undefined && (typeof search !== 'string' || !search.trim())) {
+    return { error: 'search must be a non-empty string' };
+  }
+  if (status !== undefined && !STATUSES.includes(status)) {
+    return { error: 'status must be planned, active or done' };
+  }
+  if (search === undefined && status === undefined) {
+    return { error: 'provide search and/or status' };
+  }
+
+  const where = {};
+  if (status !== undefined) {
+    where.status = status;
+  }
+  if (search !== undefined) {
+    const q = `%${search.trim()}%`;
+    where[Op.or] = [
+      { name: { [Op.iLike]: q } },
+      { goal: { [Op.iLike]: q } },
+    ];
+  }
+  return { where };
+}
+
+async function listSprints(where) {
+  return Sprint.findAll({
+    ...(where ? { where } : {}),
+    include: [{ model: ActionItem, as: 'actionItems' }],
+    order: [['id', 'ASC']],
+  });
+}
+
 async function getAll(req, res, next) {
   try {
-    const sprints = await Sprint.findAll({
-      include: [{ model: ActionItem, as: 'actionItems' }],
-      order: [['id', 'ASC']],
-    });
+    const search =
+      typeof req.query.search === 'string' && req.query.search.trim()
+        ? req.query.search
+        : undefined;
+    const status =
+      typeof req.query.status === 'string' && req.query.status.trim()
+        ? req.query.status
+        : undefined;
+
+    if (search !== undefined || status !== undefined) {
+      const parsed = buildSearchWhere({ search, status });
+      if (parsed.error) {
+        return next({ status: 400, message: parsed.error });
+      }
+      const sprints = await listSprints(parsed.where);
+      return res.status(200).json(sprints);
+    }
+
+    const sprints = await listSprints();
     res.status(200).json(sprints);
   } catch (err) {
     next(err);
@@ -64,34 +112,12 @@ async function getAll(req, res, next) {
 async function search(req, res, next) {
   try {
     const { search, status } = req.body || {};
-
-    if (search !== undefined && (typeof search !== 'string' || !search.trim())) {
-      return next({ status: 400, message: 'search must be a non-empty string' });
-    }
-    if (status !== undefined && !STATUSES.includes(status)) {
-      return next({ status: 400, message: 'status must be planned, active or done' });
-    }
-    if (search === undefined && status === undefined) {
-      return next({ status: 400, message: 'provide search and/or status in body' });
+    const parsed = buildSearchWhere({ search, status });
+    if (parsed.error) {
+      return next({ status: 400, message: parsed.error });
     }
 
-    const where = {};
-    if (status !== undefined) {
-      where.status = status;
-    }
-    if (search !== undefined) {
-      const q = `%${search.trim()}%`;
-      where[Op.or] = [
-        { name: { [Op.iLike]: q } },
-        { goal: { [Op.iLike]: q } },
-      ];
-    }
-
-    const sprints = await Sprint.findAll({
-      where,
-      include: [{ model: ActionItem, as: 'actionItems' }],
-      order: [['id', 'ASC']],
-    });
+    const sprints = await listSprints(parsed.where);
     res.status(200).json(sprints);
   } catch (err) {
     next(err);
