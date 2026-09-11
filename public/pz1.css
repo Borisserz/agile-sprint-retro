@@ -1,0 +1,46 @@
+/* ПЗ1: простые стили для EJS-страниц */
+body {
+  font-family: Georgia, "Times New Roman", serif;
+  margin: 0;
+  background: #f4f7fb;
+  color: #1a2332;
+}
+.top, .nav, .main, .foot {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #1e3a5f;
+  color: #fff;
+  max-width: none;
+}
+.nav {
+  display: flex;
+  gap: 1rem;
+  background: #d9e6f5;
+  max-width: none;
+}
+.nav a { color: #123; }
+.main { min-height: 50vh; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th, td { border: 1px solid #ccd6e0; padding: 0.45rem 0.6rem; text-align: left; }
+.card { background: #fff; padding: 1rem; border: 1px solid #ccd6e0; }
+.form label { display: block; margin: 0.6rem 0; }
+.form input, .form select { display: block; width: 100%; max-width: 420px; padding: 0.35rem; }
+.btn, button {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  background: #2b6cb0;
+  color: #fff;
+  text-decoration: none;
+  border: 0;
+  cursor: pointer;
+}
+.error { color: #a11; }
+.hint { color: #445; }
+.foot { color: #667; font-size: 0.9rem; }

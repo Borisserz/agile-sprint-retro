@@ -1,0 +1,27 @@
+<%- include('partials/header') %>
+<%# ПЗ1: главная — список спринтов из массива %>
+<h1>Список спринтов</h1>
+<p class="hint">Данные хранятся в массиве в памяти (без БД).</p>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Название</th>
+      <th>Цель</th>
+      <th>Статус</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% sprints.forEach(function (sprint) { %>
+      <tr>
+        <td><%= sprint.id %></td>
+        <td><%= sprint.name %></td>
+        <td><%= sprint.goal %></td>
+        <td><%= sprint.status %></td>
+        <td><a href="/item/<%= sprint.id %>?auth=1">Открыть</a></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+<%- include('partials/footer') %>

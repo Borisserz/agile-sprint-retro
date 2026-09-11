@@ -1,0 +1,23 @@
+<%- include('partials/header') %>
+<%# ПЗ1: форма добавления спринта (POST /add) %>
+<h1>Добавить спринт</h1>
+<% if (typeof error !== 'undefined' && error) { %>
+  <p class="error"><%= error %></p>
+<% } %>
+<form method="post" action="/add?auth=1" class="form">
+  <label>Название
+    <input name="name" required maxlength="80" />
+  </label>
+  <label>Цель
+    <input name="goal" required maxlength="200" />
+  </label>
+  <label>Статус
+    <select name="status">
+      <option value="planned">planned</option>
+      <option value="active">active</option>
+      <option value="done">done</option>
+    </select>
+  </label>
+  <button type="submit">Сохранить</button>
+</form>
+<%- include('partials/footer') %>

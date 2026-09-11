@@ -2,7 +2,7 @@
 
 Service for planning sprints and retrospectives in Agile teams.
 
-Lab 8 (ITIVP): Docker Compose full stack. Branch `28`.
+Practical 1 (ITIVP): EJS + middleware. Branch `pz21` (from lab `28`).
 
 ## Layout
 
@@ -10,6 +10,29 @@ Lab 8 (ITIVP): Docker Compose full stack. Branch `28`.
 - Frontend (Labs 4–5, 7–8): `client/` — Vite; in Docker served by nginx on `http://localhost`
 - PostgreSQL + MongoDB via Compose
 - WebSocket: Socket.IO on the backend HTTP server (JWT)
+- **ПЗ1 (EJS SSR):** same backend port — open with `?auth=1`
+
+## Practical 1 — EJS pages (branch `pz21`)
+
+In-memory sprints (no DB). Auth imitation: add `?auth=1` or open `/login`.
+
+```bash
+npm install
+docker compose up -d db mongo   # API still needs DB; EJS list does not
+cp .env.example .env
+npm run db:migrate && npm run db:seed
+npm run dev
+```
+
+| URL | Page |
+|-----|------|
+| http://localhost:3000/?auth=1 | list (`index.ejs`) |
+| http://localhost:3000/item/1?auth=1 | detail (`item.ejs`) |
+| http://localhost:3000/add?auth=1 | add form (`add.ejs`) |
+| http://localhost:3000/login | login hint |
+| http://localhost:3000/no-such-page | `404.ejs` |
+
+Code marked with `// ПЗ1:` / `<%# ПЗ1: %>` — logger, auth, views, in-memory data.
 
 ## Docker (Lab 8) — recommended
 
