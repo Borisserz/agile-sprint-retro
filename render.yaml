@@ -4,10 +4,10 @@ services:
     runtime: node
     plan: free
     region: frankfurt
-    buildCommand: npm ci
-    startCommand: npm run db:migrate && npm start
-    healthCheckPath: /health
+    # Pin Node — Render default 24 breaks nothing critical, but course stack is 20.
     envVars:
+      - key: NODE_VERSION
+        value: "20"
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
@@ -24,9 +24,14 @@ services:
         sync: false
       - key: CORS_ORIGINS
         sync: false
+    buildCommand: npm ci
+    startCommand: npm run db:migrate && npm start
+    healthCheckPath: /health
 
 databases:
   - name: agile-sprint-retro-db
     plan: free
+    # MUST match the web service region or Internal DB hostname won't resolve (ENOTFOUND).
+    region: frankfurt
     databaseName: agile_sprint_retro
     user: agile
