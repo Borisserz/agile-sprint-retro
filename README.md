@@ -2,23 +2,25 @@
 
 Service for planning sprints and retrospectives in Agile teams.
 
-Practical 3 (ITIVP): React Router v6. Branch `pz23` (from lab `28`).
+Practical 4 (ITIVP): Context + useReducer. Branch `pz24` (from `pz23` / lab `28`).
 
 ## Layout
 
 - Backend (Labs 1–3, 6–8): project root (`http://localhost:3000`)
-- Frontend (Labs 4–5, 7–8 + **ПЗ3**): `client/` — Vite; in Docker nginx on `http://localhost`
+- Frontend: `client/` — Vite; **ПЗ3** Router + **ПЗ4** Context
 - PostgreSQL + MongoDB via Compose
 - WebSocket: Socket.IO on the backend HTTP server (JWT)
 
-## Practical 3 — React Router (branch `pz23`)
+## Practical 4 — state (branch `pz24`)
 
 ```bash
 cd client && npm install && npm run dev
 ```
 
-Routes: `/`, `/catalog`, `/catalog/:id`, `/about`, `/login`, `/dashboard` (PrivateRoute), `*` → 404.  
-Nav uses `NavLink` (active class). Login sets `localStorage.pz23_isAuth` and `navigate('/dashboard')`.
+- Theme + language: `ThemeLangProvider` (toggle in nav)
+- Favorites: `useReducer` + `FavoritesProvider` (ADD / REMOVE / SET_VOTES / CLEAR), persisted in `localStorage`
+- Prop drilling demo on Home (`PropDrillingDemo`)
+- Use Context on Catalog / Dashboard without drilling
 
 ## Docker (Lab 8) — recommended
 

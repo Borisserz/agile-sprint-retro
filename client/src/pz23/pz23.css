@@ -58,3 +58,68 @@
   border: 0;
   cursor: pointer;
 }
+
+/* ПЗ4: тёмная тема + prop drilling / избранное */
+.pz23.theme-dark {
+  background: #121820;
+  color: #e8eef6;
+}
+.pz23.theme-dark .pz23-top {
+  background: #0b1220;
+}
+.pz23.theme-dark .pz23-nav {
+  background: #1c2736;
+}
+.pz23.theme-dark .pz23-nav a {
+  color: #dce7f5;
+}
+.pz23.theme-dark .pz23-nav a.active {
+  background: #3b82c4;
+}
+.pz23.theme-dark .pz23-linkbtn {
+  color: #dce7f5;
+}
+.pz23.theme-dark .pz23-card {
+  background: #1a2330;
+  border-color: #334155;
+}
+.pz24-drill {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px dashed #7a8aa0;
+  background: #eef3f9;
+}
+.pz23.theme-dark .pz24-drill {
+  background: #182130;
+  border-color: #4b5c73;
+}
+.pz24-drill-box {
+  margin: 0.45rem 0 0.45rem 0.75rem;
+  padding: 0.4rem 0.55rem;
+  border-left: 3px solid #2b6cb0;
+}
+.pz24-avatar {
+  font-weight: 600;
+}
+.pz24-muted {
+  color: #667;
+}
+.pz23.theme-dark .pz24-muted {
+  color: #9ab0c0;
+}
+.pz24-votes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.75rem 0;
+}
+.pz24-votes button,
+.pz23-list button,
+.pz23-card > button,
+.pz23-main > button {
+  margin-left: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+}
+

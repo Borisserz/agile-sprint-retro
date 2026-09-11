@@ -1,5 +1,7 @@
-// ПЗ3: маршруты React Router v6 (см. методичку)
+// ПЗ3 + ПЗ4: Router + Context providers
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { ThemeLangProvider } from './pz24/ThemeLangContext';
+import { FavoritesProvider } from './pz24/FavoritesContext';
 import Layout from './pz23/Layout';
 import PrivateRoute from './pz23/PrivateRoute';
 import HomePage from './pz23/pages/HomePage';
@@ -13,27 +15,31 @@ import NotFoundPage from './pz23/pages/NotFoundPage';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<HomePage />} />
-          <Route path="catalog" element={<CatalogLayout />}>
-            <Route index element={<CatalogListPage />} />
-            <Route path=":id" element={<CatalogItemPage />} />
-          </Route>
-          <Route path="about" element={<AboutPage />} />
-          <Route path="login" element={<LoginPage />} />
-          <Route
-            path="dashboard"
-            element={
-              <PrivateRoute>
-                <DashboardPage />
-              </PrivateRoute>
-            }
-          />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ThemeLangProvider>
+      <FavoritesProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<HomePage />} />
+              <Route path="catalog" element={<CatalogLayout />}>
+                <Route index element={<CatalogListPage />} />
+                <Route path=":id" element={<CatalogItemPage />} />
+              </Route>
+              <Route path="about" element={<AboutPage />} />
+              <Route path="login" element={<LoginPage />} />
+              <Route
+                path="dashboard"
+                element={
+                  <PrivateRoute>
+                    <DashboardPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </FavoritesProvider>
+    </ThemeLangProvider>
   );
 }
