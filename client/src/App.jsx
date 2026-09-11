@@ -1,82 +1,39 @@
-import { useEffect, useState } from 'react';
-import LoginForm from './components/LoginForm';
-import SprintList from './components/SprintList';
-import { fetchProfile, getErrorMessage } from './api';
-import { disconnectSocket } from './socket';
-import './App.css';
+// ПЗ3: маршруты React Router v6 (см. методичку)
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import Layout from './pz23/Layout';
+import PrivateRoute from './pz23/PrivateRoute';
+import HomePage from './pz23/pages/HomePage';
+import CatalogLayout from './pz23/pages/CatalogLayout';
+import CatalogListPage from './pz23/pages/CatalogListPage';
+import CatalogItemPage from './pz23/pages/CatalogItemPage';
+import AboutPage from './pz23/pages/AboutPage';
+import LoginPage from './pz23/pages/LoginPage';
+import DashboardPage from './pz23/pages/DashboardPage';
+import NotFoundPage from './pz23/pages/NotFoundPage';
 
 export default function App() {
-  const [session, setSession] = useState(() => {
-    const token = localStorage.getItem('token');
-    return token ? { token, user: null } : null;
-  });
-  const [bootError, setBootError] = useState(null);
-
-  useEffect(() => {
-    if (!session) {
-      document.title = 'Sprint Control | Sign in';
-      return;
-    }
-    document.title = 'Sprint Control';
-    if (session.user) return undefined;
-
-    let cancelled = false;
-    fetchProfile()
-      .then(({ data }) => {
-        if (!cancelled) setSession((prev) => (prev ? { ...prev, user: data } : prev));
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        localStorage.removeItem('token');
-        disconnectSocket();
-        setSession(null);
-        setBootError(getErrorMessage(err));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [session]);
-
-  function onLogout() {
-    localStorage.removeItem('token');
-    disconnectSocket();
-    setSession(null);
-  }
-
-  if (session && !session.user) {
-    return (
-      <div className="viewport">
-        <div className="viewport-bg" aria-hidden="true" />
-        <div className="boot" role="status">
-          <div className="boot-console">
-            <div className="boot-copy">
-              <p>Restoring session</p>
-              <span>GET /profile…</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="viewport">
-      <div className="viewport-bg" aria-hidden="true" />
-      {session ? (
-        <SprintList onLogout={onLogout} user={session.user} />
-      ) : (
-        <LoginForm
-          onSuccess={(data) => {
-            setBootError(null);
-            setSession({ token: data.token, user: data.user });
-          }}
-        />
-      )}
-      {bootError && !session && (
-        <p className="banner banner--error" style={{ position: 'fixed', bottom: 16, left: 16 }}>
-          {bootError}
-        </p>
-      )}
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<HomePage />} />
+          <Route path="catalog" element={<CatalogLayout />}>
+            <Route index element={<CatalogListPage />} />
+            <Route path=":id" element={<CatalogItemPage />} />
+          </Route>
+          <Route path="about" element={<AboutPage />} />
+          <Route path="login" element={<LoginPage />} />
+          <Route
+            path="dashboard"
+            element={
+              <PrivateRoute>
+                <DashboardPage />
+              </PrivateRoute>
+            }
+          />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }

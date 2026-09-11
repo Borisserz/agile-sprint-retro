@@ -2,14 +2,23 @@
 
 Service for planning sprints and retrospectives in Agile teams.
 
-Lab 8 (ITIVP): Docker Compose full stack. Branch `28`.
+Practical 3 (ITIVP): React Router v6. Branch `pz23` (from lab `28`).
 
 ## Layout
 
 - Backend (Labs 1–3, 6–8): project root (`http://localhost:3000`)
-- Frontend (Labs 4–5, 7–8): `client/` — Vite; in Docker served by nginx on `http://localhost`
+- Frontend (Labs 4–5, 7–8 + **ПЗ3**): `client/` — Vite; in Docker nginx on `http://localhost`
 - PostgreSQL + MongoDB via Compose
 - WebSocket: Socket.IO on the backend HTTP server (JWT)
+
+## Practical 3 — React Router (branch `pz23`)
+
+```bash
+cd client && npm install && npm run dev
+```
+
+Routes: `/`, `/catalog`, `/catalog/:id`, `/about`, `/login`, `/dashboard` (PrivateRoute), `*` → 404.  
+Nav uses `NavLink` (active class). Login sets `localStorage.pz23_isAuth` and `navigate('/dashboard')`.
 
 ## Docker (Lab 8) — recommended
 
