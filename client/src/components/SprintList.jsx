@@ -9,6 +9,7 @@ import {
   updateSprint,
 } from '../api';
 import ActionItems from './ActionItems';
+import ChangePasswordForm from './ChangePasswordForm';
 
 const STATUSES = ['planned', 'active', 'done'];
 const FILTERS = ['all', ...STATUSES];
@@ -264,6 +265,7 @@ export default function SprintList({ onLogout, user }) {
               {user?.email || 'signed in'}
               {user?.role ? ` · ${user.role}` : ''}
             </span>
+            <ChangePasswordForm />
             <button type="button" className="btn btn-quiet" onClick={onLogout}>
               Log out
             </button>

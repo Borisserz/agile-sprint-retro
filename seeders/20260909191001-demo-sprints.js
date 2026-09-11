@@ -2,6 +2,12 @@
 
 module.exports = {
   async up(queryInterface) {
+    const [[{ count }]] = await queryInterface.sequelize.query(
+      'SELECT COUNT(*)::int AS count FROM "Sprints";',
+    );
+    // Avoid duplicating demo sprints on every Compose restart.
+    if (count > 0) return;
+
     const now = new Date();
     const day = 24 * 60 * 60 * 1000;
 
