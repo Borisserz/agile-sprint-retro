@@ -1,6 +1,6 @@
 # KP Product Implementation Plan
 
-> **Status (2026-09-11):** Tasks 1–9 on `origin/kp`. Local product verified (Compose + API + UI). CI test glob fixed. **Cloud URL still TODO** → not 100% for note §2.4.3 until student provides Render/Netlify/Atlas.
+> **Status (2026-09-11):** SolHi audit ([82e88090](82e88090-4ff8-4d6a-a7ae-731e6a2294c3)) flagged CI/dirty tree/CSS — **addressed** on `kp` (`1ae4b32`: portable test runner, checkbox/topbar CSS, clean tree). Remaining for «100% записка»: public Render+Netlify URLs + smoke evidence. Until then: **NO-GO** on «развёрнуто / доступно по адресу».
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
