@@ -1,6 +1,6 @@
 # KP Product Implementation Plan
 
-> **Status (2026-09-11):** Tasks 1–9 implemented on branch `kp` and pushed to `origin/kp`. SolHi product audit: **GO** for explanatory note (cloud URL evidence remains TODO). Task 10 live cloud deploy remains credential-blocked until Render/Atlas/Netlify accounts are available.
+> **Status (2026-09-11):** Tasks 1–9 on `origin/kp`. Local product verified (Compose + API + UI). CI test glob fixed. **Cloud URL still TODO** → not 100% for note §2.4.3 until student provides Render/Netlify/Atlas.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

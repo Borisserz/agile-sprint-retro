@@ -188,6 +188,15 @@ body {
   animation: enter-room var(--dur-long) var(--ease-out) both;
 }
 
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+}
+
 .topbar-right {
   display: flex;
   flex-wrap: wrap;
