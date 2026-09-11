@@ -5,5 +5,7 @@ node_modules/
 .idea/
 .vscode/
 report/
-docs/
+docs/*
+!docs/superpowers/
+!docs/superpowers/**
 client/dist/
