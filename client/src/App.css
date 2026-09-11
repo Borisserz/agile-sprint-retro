@@ -521,6 +521,18 @@ textarea:disabled {
   opacity: 0.55;
 }
 
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1.05rem;
+  min-width: 1.05rem;
+  max-width: 1.05rem;
+  height: 1.05rem;
+  min-height: 1.05rem;
+  padding: 0;
+  border-radius: 0.25rem;
+  flex: 0 0 auto;
+}
+
 .compose-actions,
 .ticket-actions,
 .stage-bar {
