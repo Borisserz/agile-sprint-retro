@@ -1,0 +1,10 @@
+<%- include('partials/header') %>
+<%# ПЗ1: детальная страница элемента по ID %>
+<h1><%= sprint.name %></h1>
+<dl class="card">
+  <dt>ID</dt><dd><%= sprint.id %></dd>
+  <dt>Цель</dt><dd><%= sprint.goal %></dd>
+  <dt>Статус</dt><dd><%= sprint.status %></dd>
+</dl>
+<p><a href="/?auth=1">← К списку</a></p>
+<%- include('partials/footer') %>

@@ -1,0 +1,6 @@
+<%- include('partials/header') %>
+<%# ПЗ1: страница 500 %>
+<h1>500 — ошибка сервера</h1>
+<p><%= typeof message !== 'undefined' ? message : 'Что-то пошло не так.' %></p>
+<p><a href="/?auth=1">На главную</a></p>
+<%- include('partials/footer') %>

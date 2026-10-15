@@ -1,0 +1,6 @@
+<%- include('partials/header') %>
+<%# ПЗ1: страница 404 %>
+<h1>404 — страница не найдена</h1>
+<p><%= typeof message !== 'undefined' ? message : 'Такого адреса нет.' %></p>
+<p><a href="/?auth=1">На главную</a></p>
+<%- include('partials/footer') %>

@@ -2,14 +2,14 @@
 
 Backend for planning sprints and retrospectives in Agile teams.
 
-Lab 3 (ITIVP): JWT auth, bcrypt, RBAC, change-password. Branch `lab23`.
+Practical 1 (ITIVP): EJS + middleware. Branch `pz21` (from `lab23`).
 
 ## Stack
 
 - Node.js / Express
-- PostgreSQL / Sequelize
-- bcrypt / jsonwebtoken
-- Docker (local database)
+- PostgreSQL / Sequelize (Labs 2–3 API)
+- bcrypt / jsonwebtoken (Lab 3)
+- EJS SSR (ПЗ1) — in-memory list, separate from DB
 
 ## Setup
 
@@ -30,7 +30,21 @@ Seed users (password `Password1!`):
 - `member@agile.local` — role `member`
 - `facilitator@agile.local` — role `facilitator`
 
-## Auth routes
+## Practical 1 — EJS pages
+
+In-memory sprints (no DB for the HTML pages). Auth imitation: add `?auth=1` or open `/login`.
+
+| URL | Page |
+|-----|------|
+| http://localhost:3000/?auth=1 | list (`index.ejs`) |
+| http://localhost:3000/item/1?auth=1 | detail (`item.ejs`) |
+| http://localhost:3000/add?auth=1 | add form (`add.ejs`) |
+| http://localhost:3000/login | login hint |
+| http://localhost:3000/no-such-page | `404.ejs` |
+
+Code marked with `// ПЗ1:` / `<%# ПЗ1: %>` — logger, auth imitation, views, in-memory data.
+
+## Auth routes (Lab 3)
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
@@ -39,7 +53,7 @@ Seed users (password `Password1!`):
 | POST | /auth/change-password | Bearer | Change password |
 | GET | /profile | Bearer | Current user |
 
-## Sprint routes
+## Sprint routes (Labs 1–3)
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
