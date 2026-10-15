@@ -6,13 +6,14 @@
   <link rel="stylesheet" href="/pz1.css" />
 </head>
 <body>
-  <header>
+  <header class="top">
     <strong>Agile Sprint Retro</strong>
     — <%= user && user.name ? user.name : 'Гость' %>
   </header>
   <nav>
     <a href="/?auth=1">Список</a>
     <a href="/add?auth=1">Добавить</a>
+    <a href="/demo-500?auth=1">Демо 500</a>
     <a href="/login">Вход</a>
   </nav>
   <main>

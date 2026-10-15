@@ -1,5 +1,9 @@
 <%- include('partials/header') %>
-<h1>500</h1>
+<h1>500 — ошибка сервера</h1>
 <p><%= message %></p>
+<p>
+  Страница сформирована шаблоном <code>500.ejs</code> через error-handling middleware
+  (четыре параметра: err, req, res, next). Ошибка записана в журнал сервера.
+</p>
 <p><a href="/?auth=1">На главную</a></p>
 <%- include('partials/footer') %>

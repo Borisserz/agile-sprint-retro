@@ -2,14 +2,15 @@
 
 Backend for planning sprints and retrospectives in Agile teams.
 
-Practical 1 (ITIVP): EJS + middleware. Branch `pz21` (from `lab23`).
+Practical 1 (ITIVP): EJS + middleware. Branch `pz21` (from `lab23`). Variant 49 (odd): request log to file.
 
 ## Stack
 
 - Node.js / Express
 - PostgreSQL / Sequelize (Labs 2–3 API)
 - bcrypt / jsonwebtoken (Lab 3)
-- EJS SSR (ПЗ1) — in-memory list, separate from DB
+- EJS SSR (ПЗ1) — in-memory list; constraints in `config/pz1Constraints.json`
+- Request log file: `logs/pz1-requests.log` (created automatically)
 
 ## Setup
 
@@ -25,45 +26,19 @@ npm run dev
 
 Server: `http://localhost:3000`
 
-Seed users (password `Password1!`):
-
-- `member@agile.local` — role `member`
-- `facilitator@agile.local` — role `facilitator`
-
 ## Practical 1 — EJS pages
-
-In-memory sprints (no DB for the HTML pages). Auth imitation: add `?auth=1` or open `/login`.
 
 | URL | Page |
 |-----|------|
-| http://localhost:3000/?auth=1 | list (`index.ejs`) |
-| http://localhost:3000/item/1?auth=1 | detail (`item.ejs`) |
-| http://localhost:3000/add?auth=1 | add form (`add.ejs`) |
-| http://localhost:3000/login | login hint |
+| http://localhost:3000/?auth=1 | list |
+| http://localhost:3000/item/1?auth=1 | detail |
+| http://localhost:3000/add?auth=1 | add form |
+| http://localhost:3000/demo-500?auth=1 | `500.ejs` demo |
 | http://localhost:3000/no-such-page | `404.ejs` |
+| http://localhost:3000/login | login hint |
 
-Code marked with `// ПЗ1:` / `<%# ПЗ1: %>` — logger, auth imitation, views, in-memory data.
+Form checks (server + `config/pz1Constraints.json`): non-empty fields, string length limits, capacity ≥ 0. Each sprint has unique `createdAt`.
 
-## Auth routes (Lab 3)
+## Auth / sprint API (Labs 1–3)
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | /auth/register | no | Register (role member) |
-| POST | /auth/login | no | Login, returns JWT (1h) |
-| POST | /auth/change-password | Bearer | Change password |
-| GET | /profile | Bearer | Current user |
-
-## Sprint routes (Labs 1–3)
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | /sprints | no | List |
-| QUERY | /sprints | no | Search |
-| GET | /sprints/:id | no | By id |
-| POST | /sprints | no | Create |
-| PUT | /sprints/:id | no | Update |
-| DELETE | /sprints/:id | Bearer + facilitator | Delete |
-
-Header: `Authorization: Bearer <token>`
-
-JWT payload: `{ id, email, role }`.
+See Lab 3 README routes: `/auth/*`, `/profile`, `/sprints`.

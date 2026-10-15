@@ -5,7 +5,8 @@
     <th>ID</th>
     <th>Название</th>
     <th>Цель</th>
-    <th>Статус</th>
+    <th>Ёмкость</th>
+    <th>Время создания</th>
     <th></th>
   </tr>
   <% sprints.forEach(function (sprint) { %>
@@ -13,7 +14,8 @@
       <td><%= sprint.id %></td>
       <td><%= sprint.name %></td>
       <td><%= sprint.goal %></td>
-      <td><%= sprint.status %></td>
+      <td><%= sprint.capacity %></td>
+      <td><%= sprint.createdAt %></td>
       <td><a href="/item/<%= sprint.id %>?auth=1">Открыть</a></td>
     </tr>
   <% }) %>

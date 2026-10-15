@@ -3,15 +3,22 @@
 <% if (typeof error !== 'undefined' && error) { %>
   <p class="error"><%= error %></p>
 <% } %>
+<p class="hint">
+  Проверки: поля не пустые;
+  название <%= constraints.name.minLength %>–<%= constraints.name.maxLength %> символов;
+  цель <%= constraints.goal.minLength %>–<%= constraints.goal.maxLength %> символов;
+  ёмкость число от <%= constraints.capacity.min %> до <%= constraints.capacity.max %>.
+  Ограничения заданы в config/pz1Constraints.json.
+</p>
 <form method="post" action="/add?auth=1">
-  <label>Название <input name="name" required /></label>
-  <label>Цель <input name="goal" required /></label>
-  <label>Статус
-    <select name="status">
-      <option value="planned">planned</option>
-      <option value="active">active</option>
-      <option value="done">done</option>
-    </select>
+  <label>Название
+    <input name="name" required maxlength="<%= constraints.name.maxLength %>" />
+  </label>
+  <label>Цель
+    <input name="goal" required maxlength="<%= constraints.goal.maxLength %>" />
+  </label>
+  <label>Ёмкость (число ≥ 0)
+    <input name="capacity" type="number" required min="<%= constraints.capacity.min %>" max="<%= constraints.capacity.max %>" />
   </label>
   <button type="submit">Сохранить</button>
 </form>

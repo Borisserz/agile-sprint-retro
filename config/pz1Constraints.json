@@ -1,0 +1,5 @@
+{
+  "name": { "minLength": 1, "maxLength": 80 },
+  "goal": { "minLength": 1, "maxLength": 200 },
+  "capacity": { "min": 0, "max": 1000 }
+}

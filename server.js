@@ -52,7 +52,11 @@ app.use((err, req, res, next) => {
   }
 
   const view = status === 404 ? '404' : '500';
-  return res.status(status).render(view, { title: String(status), user, message });
+  return res.status(status).render(view, {
+    title: String(status),
+    user,
+    message,
+  });
 });
 
 async function start() {
