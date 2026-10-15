@@ -1,19 +1,9 @@
-// ПЗ1: данные в массиве в памяти (без БД), тематика — спринты Agile
+// ПЗ1: массив в памяти (без БД)
 let nextId = 3;
 
 const sprints = [
-  {
-    id: 1,
-    name: 'Sprint 1',
-    goal: 'Ship backlog board',
-    status: 'done',
-  },
-  {
-    id: 2,
-    name: 'Sprint 2',
-    goal: 'Connect React to API',
-    status: 'active',
-  },
+  { id: 1, name: 'Sprint 1', goal: 'Plan backlog', status: 'done' },
+  { id: 2, name: 'Sprint 2', goal: 'Ship JWT auth', status: 'active' },
 ];
 
 function listSprints() {
@@ -25,12 +15,7 @@ function findSprint(id) {
 }
 
 function addSprint({ name, goal, status }) {
-  const sprint = {
-    id: nextId,
-    name,
-    goal,
-    status: status || 'planned',
-  };
+  const sprint = { id: nextId, name, goal, status: status || 'planned' };
   nextId += 1;
   sprints.push(sprint);
   return sprint;
