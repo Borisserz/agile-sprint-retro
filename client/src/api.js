@@ -1,4 +1,10 @@
 import axios from 'axios';
+import {
+  filterSprintsLocal,
+  normalizeSprint,
+  normalizeSprints,
+  sprintBasePath,
+} from './sprintSource';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
@@ -12,32 +18,55 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+function withNormalizedList(response) {
+  return {
+    ...response,
+    data: normalizeSprints(response.data),
+  };
+}
+
+function withNormalizedOne(response) {
+  return {
+    ...response,
+    data: normalizeSprint(response.data),
+  };
+}
+
 export function login(email, password) {
   return api.post('/auth/login', { email, password });
 }
 
-export function fetchSprints() {
-  return api.get('/sprints');
+export function fetchSprints(store = 'pg') {
+  return api.get(sprintBasePath(store)).then(withNormalizedList);
 }
 
-/** Server-side search/filter via HTTP QUERY (Lab 1 endpoint). */
-export function searchSprints({ search, status } = {}) {
+/** PG: HTTP QUERY. Mongo: GET all + local filter (no QUERY on /mongo). */
+export async function searchSprints({ search, status, store = 'pg' } = {}) {
+  if (store === 'mongo') {
+    const response = await fetchSprints('mongo');
+    return {
+      ...response,
+      data: filterSprintsLocal(response.data, { search, status }),
+    };
+  }
+
   const body = {};
   if (search !== undefined && search !== '') body.search = search;
   if (status !== undefined && status !== 'all') body.status = status;
-  return api.request({ method: 'QUERY', url: '/sprints', data: body });
+  const response = await api.request({ method: 'QUERY', url: '/sprints', data: body });
+  return withNormalizedList(response);
 }
 
-export function addSprint(item) {
-  return api.post('/sprints', item);
+export function addSprint(item, store = 'pg') {
+  return api.post(sprintBasePath(store), item).then(withNormalizedOne);
 }
 
-export function updateSprint(id, updated) {
-  return api.put(`/sprints/${id}`, updated);
+export function updateSprint(id, updated, store = 'pg') {
+  return api.put(`${sprintBasePath(store)}/${id}`, updated).then(withNormalizedOne);
 }
 
-export function deleteSprint(id) {
-  return api.delete(`/sprints/${id}`);
+export function deleteSprint(id, store = 'pg') {
+  return api.delete(`${sprintBasePath(store)}/${id}`);
 }
 
 export function fetchProfile() {

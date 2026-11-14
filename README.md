@@ -57,8 +57,9 @@ npm run dev
 ```
 
 1. Sign in (two browsers or two profiles: facilitator + member).
-2. Open the same sprint → **Open retro**.
-3. Chat, watch presence/typing, click vote buttons — tallies sync live.
+2. Optionally switch **PostgreSQL | MongoDB** on the board (Lab 6 dual store: `/sprints` vs `/mongo/sprints`). Auth stays on PostgreSQL.
+3. Open the same sprint → **Open retro**.
+4. Chat, watch presence/typing, click vote buttons — tallies sync live.
 
 ## Tests
 
@@ -68,6 +69,6 @@ npm test
 
 ## Compare PG vs Mongo
 
-- PostgreSQL: tables `Sprints` + `ActionItems` (FK)
-- MongoDB sprints: one document with embedded `actionItems[]`
+- PostgreSQL: tables `Sprints` + `ActionItems` (FK); search via HTTP `QUERY`
+- MongoDB sprints: one document with embedded `actionItems[]`; board filters locally
 - MongoDB retro: `retro_messages` collection for Socket.IO chat history

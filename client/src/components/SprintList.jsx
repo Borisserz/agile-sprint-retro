@@ -11,7 +11,15 @@ import RetroBoard from './RetroBoard';
 
 const STATUSES = ['planned', 'active', 'done'];
 const FILTERS = ['all', ...STATUSES];
+const STORES = [
+  { id: 'pg', label: 'PostgreSQL' },
+  { id: 'mongo', label: 'MongoDB' },
+];
 const SEARCH_DEBOUNCE_MS = 400;
+
+function sameId(a, b) {
+  return String(a) === String(b);
+}
 
 function todayInput() {
   return new Date().toISOString().slice(0, 10);
@@ -55,6 +63,7 @@ export default function SprintList({ onLogout, user }) {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [store, setStore] = useState('pg');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -67,7 +76,7 @@ export default function SprintList({ onLogout, user }) {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await fetchSprints();
+      const { data } = await fetchSprints(store);
       if (id !== requestId.current) return;
       setSprints(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -76,7 +85,7 @@ export default function SprintList({ onLogout, user }) {
     } finally {
       if (id === requestId.current) setLoading(false);
     }
-  }, []);
+  }, [store]);
 
   // Load / QUERY with debounce when search or status filter is active
   useEffect(() => {
@@ -90,10 +99,11 @@ export default function SprintList({ onLogout, user }) {
       try {
         const { data } = needsQuery
           ? await searchSprints({
+              store,
               ...(q ? { search: q } : {}),
               ...(filter !== 'all' ? { status: filter } : {}),
             })
-          : await fetchSprints();
+          : await fetchSprints(store);
         if (id !== requestId.current) return;
         setSprints(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -105,7 +115,21 @@ export default function SprintList({ onLogout, user }) {
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [search, filter]);
+  }, [search, filter, store]);
+
+  function onStoreChange(next) {
+    if (next === store) return;
+    setStore(next);
+    setEditingId(null);
+    setForm({
+      ...emptyForm,
+      startDate: todayInput(),
+      endDate: plusDaysInput(14),
+    });
+    setRetroSprint(null);
+    setSprints([]);
+    setError(null);
+  }
 
   useEffect(() => {
     document.title = `Sprints (${sprints.length}) | Agile Retro`;
@@ -151,17 +175,21 @@ export default function SprintList({ onLogout, user }) {
     }
 
     if (editingId !== null) {
-      const snapshot = sprints.find((s) => s.id === editingId);
+      const snapshot = sprints.find((s) => sameId(s.id, editingId));
       setSprints((prev) =>
-        prev.map((s) => (s.id === editingId ? { ...s, ...payload } : s)),
+        prev.map((s) => (sameId(s.id, editingId) ? { ...s, ...payload } : s)),
       );
       try {
-        const { data } = await updateSprint(editingId, payload);
-        setSprints((prev) => prev.map((s) => (s.id === editingId ? data : s)));
+        const { data } = await updateSprint(editingId, payload, store);
+        setSprints((prev) =>
+          prev.map((s) => (sameId(s.id, editingId) ? data : s)),
+        );
         resetForm();
       } catch (err) {
         if (snapshot) {
-          setSprints((prev) => prev.map((s) => (s.id === editingId ? snapshot : s)));
+          setSprints((prev) =>
+            prev.map((s) => (sameId(s.id, editingId) ? snapshot : s)),
+          );
         }
         showNotice(getErrorMessage(err));
       }
@@ -173,10 +201,10 @@ export default function SprintList({ onLogout, user }) {
     setSprints((prev) => [...prev, optimistic]);
     resetForm();
     try {
-      const { data } = await addSprint(payload);
-      setSprints((prev) => prev.map((s) => (s.id === tempId ? data : s)));
+      const { data } = await addSprint(payload, store);
+      setSprints((prev) => prev.map((s) => (sameId(s.id, tempId) ? data : s)));
     } catch (err) {
-      setSprints((prev) => prev.filter((s) => s.id !== tempId));
+      setSprints((prev) => prev.filter((s) => !sameId(s.id, tempId)));
       showNotice(getErrorMessage(err));
     }
   }
@@ -194,19 +222,19 @@ export default function SprintList({ onLogout, user }) {
   }
 
   async function onDelete(id) {
-    const snapshot = sprints.find((s) => s.id === id);
+    const snapshot = sprints.find((s) => sameId(s.id, id));
     if (!snapshot) return;
-    setSprints((prev) => prev.filter((s) => s.id !== id));
-    if (editingId === id) resetForm();
+    setSprints((prev) => prev.filter((s) => !sameId(s.id, id)));
+    if (sameId(editingId, id)) resetForm();
     try {
-      await deleteSprint(id);
+      await deleteSprint(id, store);
     } catch (err) {
-      setSprints((prev) =>
-        [...prev, snapshot].sort((a, b) => Number(a.id) - Number(b.id)),
-      );
+      setSprints((prev) => [...prev, snapshot]);
       showNotice(getErrorMessage(err));
     }
   }
+
+  const storePath = store === 'mongo' ? '/mongo/sprints' : '/sprints';
 
   if (loading && sprints.length === 0 && !error) {
     return (
@@ -219,7 +247,7 @@ export default function SprintList({ onLogout, user }) {
           </div>
           <div className="boot-copy">
             <p>Loading sprints from API</p>
-            <span>GET /sprints…</span>
+            <span>GET {storePath}…</span>
           </div>
           <div className="boot-track" aria-hidden="true">
             <span />
@@ -281,7 +309,7 @@ export default function SprintList({ onLogout, user }) {
           <div className="rail-head">
             <p className="rail-tag">{editingId ? 'Edit mode' : 'Composer'}</p>
             <h2 id="compose-title">{editingId ? 'Edit sprint' : 'Compose sprint'}</h2>
-            <p>{editingId ? 'Update on server' : 'POST to /sprints'}</p>
+            <p>{editingId ? 'Update on server' : `POST to ${storePath}`}</p>
           </div>
 
           <form className="compose" onSubmit={onSubmit}>
@@ -375,6 +403,19 @@ export default function SprintList({ onLogout, user }) {
               </p>
             </div>
             <div className="stage-tools">
+              <div className="seg" role="group" aria-label="Data store">
+                {STORES.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`seg-btn${store === s.id ? ' is-on' : ''}`}
+                    aria-pressed={store === s.id}
+                    onClick={() => onStoreChange(s.id)}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
               <label className="search">
                 Search
                 <input
@@ -427,7 +468,7 @@ export default function SprintList({ onLogout, user }) {
                 <li
                   key={sprint.id}
                   className={`ticket ticket--${sprint.status}${
-                    editingId === sprint.id ? ' is-editing' : ''
+                    sameId(editingId, sprint.id) ? ' is-editing' : ''
                   }`}
                   data-index={String(index + 1).padStart(2, '0')}
                   style={{ '--delay': `${index * 45}ms` }}
