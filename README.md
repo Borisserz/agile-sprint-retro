@@ -2,28 +2,53 @@
 
 Service for planning sprints and retrospectives in Agile teams.
 
-Lab 7 (ITIVP): Socket.IO live retro rooms. Branch `27`.
+Coursework baseline (`kp`): Labs 1–8 combined — full product features from Lab 7 plus Docker Compose from Lab 8.
 
 ## Layout
 
 - Backend (Labs 1–3, 6–7): project root (`npm run dev` → `http://localhost:3000`)
-- Frontend (Labs 4–5, 7): `client/` (Vite React → usually `http://localhost:5173`)
+- Frontend (Labs 4–5, 7): `client/` (Vite React → usually `http://localhost:5173`; in Docker — nginx on `http://localhost`)
 - PostgreSQL: Sequelize routes `/sprints`, `/auth`
 - MongoDB: Mongoose `/mongo/sprints` + retro chat history (`retro_messages`)
 - WebSocket: Socket.IO on the same HTTP server (JWT required)
+- Docker (Lab 8): Compose stack `backend` + `frontend` + `db` + `mongo`
 
-## Backend
+## Docker (Lab 8) — recommended full stack
+
+```bash
+cp .env.example .env
+# set JWT_SECRET in .env
+docker compose up --build
+```
+
+| URL | What |
+|-----|------|
+| http://localhost | React UI (nginx) |
+| http://localhost:3000/health | backend health |
+| http://localhost:3000 | REST + Socket.IO |
+
+Containers: `backend`, `frontend`, `db`, `mongo`.
+
+Extras: `.env` for secrets/URLs; `GET /health` + Compose healthchecks (`depends_on: service_healthy`).
+
+Images use `node:20-alpine` (Vite 8 needs Node ≥20).
+
+Stop:
+
+```bash
+docker compose down
+```
+
+## Local backend (without app containers)
 
 ```bash
 npm install
-npm run db:up
+docker compose up -d db mongo
 cp .env.example .env
 npm run db:migrate
 npm run db:seed
 npm run dev
 ```
-
-`db:up` starts PostgreSQL (`:5433`) and MongoDB (`:27017`).
 
 Seed users (password `Password1!`):
 
@@ -47,7 +72,7 @@ Room: `retro:{sprintId}`
 | `retro:presence` | server → room | who is in the room |
 | `user:joined` / `user:left` | server → room | join/leave notices |
 
-## Frontend
+## Frontend (Vite, local)
 
 ```bash
 cd client

@@ -22,6 +22,9 @@ app.use(
 );
 app.use(express.json());
 app.use('/auth', authRouter);
+app.get('/health', (req, res) => {
+  res.status(200).json({ ok: true });
+});
 app.get('/profile', authenticate, authController.profile);
 app.use('/sprints', sprintsRouter);
 app.use('/mongo/sprints', mongoSprintsRouter);
