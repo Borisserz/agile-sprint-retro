@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: agile-sprint-retro-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    # Pin Node — Render default 24 breaks nothing critical, but course stack is 20.
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agile-sprint-retro-db
+          property: connectionString
+      - key: DATABASE_SSL
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 1h
+      - key: MONGO_URI
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+    buildCommand: npm ci
+    startCommand: npm run db:migrate && npm start
+    healthCheckPath: /health
+
+databases:
+  - name: agile-sprint-retro-db
+    plan: free
+    # MUST match the web service region or Internal DB hostname won't resolve (ENOTFOUND).
+    region: frankfurt
+    databaseName: agile_sprint_retro
+    user: agile

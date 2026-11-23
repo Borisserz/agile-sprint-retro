@@ -2,7 +2,7 @@
 
 Service for planning sprints and retrospectives in Agile teams.
 
-Coursework product on branch `kp`: Labs 1–8 + ПЗ3/ПЗ4 patterns (Router, AuthContext), dual-store from Lab 7, Docker from Lab 8. No CI/cloud deploy in this baseline.
+Coursework product on branch `kp`: Labs 1–8 (both semesters) + ПЗ3/ПЗ4 (Router, AuthContext), dual-store board, Docker, Helmet/CORS, cloud deploy (Render + Netlify + Atlas).
 
 ## Product routes
 
@@ -14,13 +14,14 @@ Coursework product on branch `kp`: Labs 1–8 + ПЗ3/ПЗ4 patterns (Router, Au
 | `/sprints/:id/retro?store=pg\|mongo` | JWT — live Socket.IO retro |
 | `*` | 404 |
 
-Shell: sticky navbar + footer on every page. Part 1 patterns: semantic landmarks, BEM blocks, `localStorage` favorites/health, autocomplete search, external Advice Slip tip with cache.
+Shell: sticky navbar + footer. Part 1 patterns: semantic landmarks, BEM, `localStorage` favorites/health, autocomplete, Advice Slip tip cache.
 
 ## Layout
 
-- Backend: Express + JWT + Sequelize (PostgreSQL) + Mongoose (MongoDB) + Socket.IO
+- Backend: Express + Helmet + JWT + Sequelize (PostgreSQL) + Mongoose (MongoDB) + Socket.IO
 - Frontend: Vite React + react-router-dom + AuthContext
 - Docker Compose: `backend`, `frontend` (nginx), `db`, `mongo`
+- Cloud: Render (API + Postgres), MongoDB Atlas, Netlify (SPA)
 
 ## Docker — full stack
 
@@ -61,17 +62,27 @@ cp .env.example .env
 npm run dev
 ```
 
-1. Sign in (or register).
-2. Switch **PostgreSQL | MongoDB** on the board.
-3. Manage action items on a sprint card.
-4. Open retro — chat, cards, votes sync live.
-
-## Tests
+## Quality checks
 
 ```bash
-npm test
+npm run check
 ```
+
+Runs server `node:test` suite, client Vitest, oxlint, and production Vite build.
+
+## Cloud deploy
+
+1. Push branch `kp`.
+2. Deploy Render Blueprint from `render.yaml`; set secrets `MONGO_URI` and `CORS_ORIGINS` (final Netlify origin).
+3. Create/link Netlify site (`netlify.toml`); set `VITE_API_URL` to the Render API URL.
+4. Redeploy backend if the Netlify origin changes.
+
+Live (product):
+
+- Frontend: https://agile-sprint-retro.netlify.app
+- API: https://agile-sprint-retro-api.onrender.com
+- Health: https://agile-sprint-retro-api.onrender.com/health
 
 ## Stack (curriculum)
 
-Express · PostgreSQL/Sequelize · JWT/bcrypt · React · Axios · MongoDB · Socket.IO · Docker · React Router · Context API · adaptive CSS.
+Express · Helmet · CORS · PostgreSQL/Sequelize · JWT/bcrypt · React · Axios · MongoDB · Socket.IO · Docker · React Router · Context API · adaptive CSS / BEM · Schema.org · localStorage · external API + cache.

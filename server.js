@@ -3,6 +3,7 @@ require('dotenv').config({ quiet: true });
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const { sequelize } = require('./models');
 const { connectMongo } = require('./config/mongo');
 const { createCorsOptions } = require('./config/cors');
@@ -17,6 +18,7 @@ const { attachSockets } = require('./socket');
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(helmet());
 app.use(cors(createCorsOptions()));
 app.use(express.json());
 app.use('/auth', authRouter);
