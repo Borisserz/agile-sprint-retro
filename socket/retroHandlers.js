@@ -1,15 +1,16 @@
 const { RetroMessage } = require('../models/mongo/RetroMessage');
+const { RetroCard } = require('../models/mongo/RetroCard');
+const { createRetroCardStore } = require('./retroCardStore');
 const {
   roomKey,
   addUser,
   removeUser,
   listUsers,
   pruneDeadUsers,
-  getCardsWithVotes,
-  toggleVote,
 } = require('./roomState');
 
 const HISTORY_LIMIT = 50;
+const cardStore = createRetroCardStore(RetroCard);
 
 function publicUser(user) {
   return {
@@ -20,7 +21,9 @@ function publicUser(user) {
   };
 }
 
-function attachRetroHandlers(io, socket) {
+function attachRetroHandlers(io, socket, options = {}) {
+  const store = options.cardStore || cardStore;
+
   socket.on('retro:join', async (payload = {}, ack) => {
     try {
       const sprintId = payload.sprintId != null ? String(payload.sprintId) : '';
@@ -47,6 +50,11 @@ function attachRetroHandlers(io, socket) {
         socketId: socket.id,
       });
 
+      const cards = await store.listOrSeed(sprintId, {
+        id: socket.data.user.id,
+        email: socket.data.user.email,
+      });
+
       const history = await RetroMessage.find({ sprintId })
         .sort({ createdAt: -1 })
         .limit(HISTORY_LIMIT)
@@ -56,7 +64,7 @@ function attachRetroHandlers(io, socket) {
       const snapshot = {
         sprintId,
         users,
-        cards: getCardsWithVotes(roomId),
+        cards,
         history: history.map((m) => ({
           id: String(m._id),
           sprintId: m.sprintId,
@@ -140,26 +148,77 @@ function attachRetroHandlers(io, socket) {
     });
   });
 
-  socket.on('retro:vote', (payload = {}, ack) => {
-    const roomId = socket.data.retroRoom;
-    if (!roomId) {
-      if (typeof ack === 'function') ack({ error: 'Join a retro room first' });
-      return;
+  socket.on('retro:card:create', async (payload = {}, ack) => {
+    try {
+      const roomId = socket.data.retroRoom;
+      const sprintId = socket.data.sprintId;
+      if (!roomId || !sprintId) {
+        if (typeof ack === 'function') ack({ error: 'Join a retro room first' });
+        return;
+      }
+      const result = await store.create(sprintId, {
+        column: payload.column,
+        text: payload.text,
+        authorId: socket.data.user.id,
+        authorEmail: socket.data.user.email,
+      });
+      if (result.error) {
+        if (typeof ack === 'function') ack({ error: result.error });
+        return;
+      }
+      io.to(roomId).emit('retro:cards', { cards: result.cards });
+      if (typeof ack === 'function') ack({ ok: true, cards: result.cards });
+    } catch (err) {
+      if (typeof ack === 'function') ack({ error: err.message || 'create failed' });
     }
-    const cardId = payload.cardId;
-    if (!cardId) {
-      if (typeof ack === 'function') ack({ error: 'cardId is required' });
-      return;
-    }
+  });
 
-    const result = toggleVote(roomId, cardId, socket.data.user.id);
-    if (result.error) {
-      if (typeof ack === 'function') ack({ error: result.error });
-      return;
+  socket.on('retro:card:delete', async (payload = {}, ack) => {
+    try {
+      const roomId = socket.data.retroRoom;
+      const sprintId = socket.data.sprintId;
+      if (!roomId || !sprintId) {
+        if (typeof ack === 'function') ack({ error: 'Join a retro room first' });
+        return;
+      }
+      const result = await store.remove(sprintId, payload.cardId, socket.data.user);
+      if (result.error) {
+        if (typeof ack === 'function') ack({ error: result.error });
+        return;
+      }
+      io.to(roomId).emit('retro:cards', { cards: result.cards });
+      if (typeof ack === 'function') ack({ ok: true, cards: result.cards });
+    } catch (err) {
+      if (typeof ack === 'function') ack({ error: err.message || 'delete failed' });
     }
+  });
 
-    io.to(roomId).emit('retro:votes', { cards: result.cards });
-    if (typeof ack === 'function') ack({ ok: true, cards: result.cards });
+  socket.on('retro:vote', async (payload = {}, ack) => {
+    try {
+      const roomId = socket.data.retroRoom;
+      const sprintId = socket.data.sprintId;
+      if (!roomId || !sprintId) {
+        if (typeof ack === 'function') ack({ error: 'Join a retro room first' });
+        return;
+      }
+      const cardId = payload.cardId;
+      if (!cardId) {
+        if (typeof ack === 'function') ack({ error: 'cardId is required' });
+        return;
+      }
+
+      const result = await store.toggleVote(sprintId, cardId, socket.data.user.id);
+      if (result.error) {
+        if (typeof ack === 'function') ack({ error: result.error });
+        return;
+      }
+
+      io.to(roomId).emit('retro:cards', { cards: result.cards });
+      io.to(roomId).emit('retro:votes', { cards: result.cards });
+      if (typeof ack === 'function') ack({ ok: true, cards: result.cards });
+    } catch (err) {
+      if (typeof ack === 'function') ack({ error: err.message || 'vote failed' });
+    }
   });
 
   socket.on('disconnect', async () => {

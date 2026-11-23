@@ -2,44 +2,40 @@
 
 Service for planning sprints and retrospectives in Agile teams.
 
-Coursework baseline (`kp`): Labs 1–8 combined — full product features from Lab 7 plus Docker Compose from Lab 8.
+Coursework product on branch `kp`: Labs 1–8 + ПЗ3/ПЗ4 patterns (Router, AuthContext), dual-store from Lab 7, Docker from Lab 8. No CI/cloud deploy in this baseline.
+
+## Product routes
+
+| Path | Access |
+|------|--------|
+| `/login`, `/register` | guest |
+| `/sprints` | JWT — board, PG\|Mongo toggle, action items |
+| `/sprints/:id/retro?store=pg\|mongo` | JWT — live Socket.IO retro |
+| `*` | 404 |
+
+Shell: sticky navbar + footer on every page.
 
 ## Layout
 
-- Backend (Labs 1–3, 6–7): project root (`npm run dev` → `http://localhost:3000`)
-- Frontend (Labs 4–5, 7): `client/` (Vite React → usually `http://localhost:5173`; in Docker — nginx on `http://localhost`)
-- PostgreSQL: Sequelize routes `/sprints`, `/auth`
-- MongoDB: Mongoose `/mongo/sprints` + retro chat history (`retro_messages`)
-- WebSocket: Socket.IO on the same HTTP server (JWT required)
-- Docker (Lab 8): Compose stack `backend` + `frontend` + `db` + `mongo`
+- Backend: Express + JWT + Sequelize (PostgreSQL) + Mongoose (MongoDB) + Socket.IO
+- Frontend: Vite React + react-router-dom + AuthContext
+- Docker Compose: `backend`, `frontend` (nginx), `db`, `mongo`
 
-## Docker (Lab 8) — recommended full stack
+## Docker — full stack
 
 ```bash
 cp .env.example .env
-# set JWT_SECRET in .env
+# set JWT_SECRET (≥32 chars recommended)
 docker compose up --build
 ```
 
 | URL | What |
 |-----|------|
-| http://localhost | React UI (nginx) |
-| http://localhost:3000/health | backend health |
+| http://localhost | React UI |
+| http://localhost:3000/health | API health |
 | http://localhost:3000 | REST + Socket.IO |
 
-Containers: `backend`, `frontend`, `db`, `mongo`.
-
-Extras: `.env` for secrets/URLs; `GET /health` + Compose healthchecks (`depends_on: service_healthy`).
-
-Images use `node:20-alpine` (Vite 8 needs Node ≥20).
-
-Stop:
-
-```bash
-docker compose down
-```
-
-## Local backend (without app containers)
+## Local backend
 
 ```bash
 npm install
@@ -55,24 +51,7 @@ Seed users (password `Password1!`):
 - `facilitator@agile.local`
 - `member@agile.local`
 
-### Socket.IO retro (Lab 7)
-
-Connect with `socket.io-client` and `auth: { token: <JWT from /auth/login> }`.
-
-Room: `retro:{sprintId}`
-
-| Event | Direction | Notes |
-|-------|-----------|--------|
-| `retro:join` | client → server | `{ sprintId }` → ack with users, cards, history |
-| `retro:leave` | client → server | leave room |
-| `retro:message` | both | chat text; persisted in Mongo |
-| `retro:typing` | both | `{ isTyping }` |
-| `retro:vote` | client → server | `{ cardId }` toggles your vote |
-| `retro:votes` | server → room | updated card tallies |
-| `retro:presence` | server → room | who is in the room |
-| `user:joined` / `user:left` | server → room | join/leave notices |
-
-## Frontend (Vite, local)
+## Local frontend
 
 ```bash
 cd client
@@ -81,10 +60,10 @@ cp .env.example .env
 npm run dev
 ```
 
-1. Sign in (two browsers or two profiles: facilitator + member).
-2. Optionally switch **PostgreSQL | MongoDB** on the board (Lab 6 dual store: `/sprints` vs `/mongo/sprints`). Auth stays on PostgreSQL.
-3. Open the same sprint → **Open retro**.
-4. Chat, watch presence/typing, click vote buttons — tallies sync live.
+1. Sign in (or register).
+2. Switch **PostgreSQL | MongoDB** on the board.
+3. Manage action items on a sprint card.
+4. Open retro — chat, cards, votes sync live.
 
 ## Tests
 
@@ -92,8 +71,6 @@ npm run dev
 npm test
 ```
 
-## Compare PG vs Mongo
+## Stack (curriculum)
 
-- PostgreSQL: tables `Sprints` + `ActionItems` (FK); search via HTTP `QUERY`
-- MongoDB sprints: one document with embedded `actionItems[]`; board filters locally
-- MongoDB retro: `retro_messages` collection for Socket.IO chat history
+Express · PostgreSQL/Sequelize · JWT/bcrypt · React · Axios · MongoDB · Socket.IO · Docker · React Router · Context API · adaptive CSS.

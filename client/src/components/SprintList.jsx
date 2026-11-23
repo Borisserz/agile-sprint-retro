@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   addSprint,
   deleteSprint,
@@ -7,7 +8,7 @@ import {
   searchSprints,
   updateSprint,
 } from '../api';
-import RetroBoard from './RetroBoard';
+import ActionItems from './ActionItems';
 
 const STATUSES = ['planned', 'active', 'done'];
 const FILTERS = ['all', ...STATUSES];
@@ -58,7 +59,8 @@ function toPayload(form) {
   };
 }
 
-export default function SprintList({ onLogout, user }) {
+export default function SprintList() {
+  const navigate = useNavigate();
   const [sprints, setSprints] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
@@ -68,7 +70,6 @@ export default function SprintList({ onLogout, user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
-  const [retroSprint, setRetroSprint] = useState(null);
   const requestId = useRef(0);
 
   const loadList = useCallback(async () => {
@@ -126,7 +127,6 @@ export default function SprintList({ onLogout, user }) {
       startDate: todayInput(),
       endDate: plusDaysInput(14),
     });
-    setRetroSprint(null);
     setSprints([]);
     setError(null);
   }
@@ -261,9 +261,8 @@ export default function SprintList({ onLogout, user }) {
     <main className="room">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true" />
           <div>
-            <p className="brand-kicker">Agile operations</p>
+            <p className="brand-kicker">Board</p>
             <h1>Sprint Control</h1>
           </div>
         </div>
@@ -286,15 +285,6 @@ export default function SprintList({ onLogout, user }) {
               <dd>{stats.done}</dd>
             </div>
           </dl>
-          <div className="session-bar">
-            <span className="session-user">
-              {user?.email || 'signed in'}
-              {user?.role ? ` · ${user.role}` : ''}
-            </span>
-            <button type="button" className="btn btn-quiet" onClick={onLogout}>
-              Log out
-            </button>
-          </div>
         </div>
       </header>
 
@@ -491,12 +481,26 @@ export default function SprintList({ onLogout, user }) {
                         <span className="cap-fill" style={{ width: `${capPct}%` }} />
                       </div>
                     </div>
+                    <ActionItems
+                      sprintId={sprint.id}
+                      store={store}
+                      items={sprint.actionItems || []}
+                      onItemsChange={(next) => {
+                        setSprints((prev) =>
+                          prev.map((row) =>
+                            sameId(row.id, sprint.id) ? { ...row, actionItems: next } : row,
+                          ),
+                        );
+                      }}
+                    />
                   </div>
                   <div className="ticket-actions">
                     <button
                       type="button"
                       className="btn btn-main"
-                      onClick={() => setRetroSprint(sprint)}
+                      onClick={() =>
+                        navigate(`/sprints/${sprint.id}/retro?store=${store}`)
+                      }
                     >
                       Open retro
                     </button>
@@ -517,14 +521,6 @@ export default function SprintList({ onLogout, user }) {
           </ul>
         </section>
       </div>
-
-      {retroSprint && (
-        <RetroBoard
-          sprint={retroSprint}
-          user={user}
-          onClose={() => setRetroSprint(null)}
-        />
-      )}
     </main>
   );
 }

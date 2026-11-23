@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const { verifyAccessToken } = require('../config/jwt');
 
 function authenticate(req, res, next) {
   const header = req.headers.authorization;
@@ -11,13 +11,8 @@ function authenticate(req, res, next) {
     return next({ status: 401, message: 'Authorization token required' });
   }
 
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    return next({ status: 500, message: 'JWT_SECRET is not configured' });
-  }
-
   try {
-    const decoded = jwt.verify(token, secret);
+    const decoded = verifyAccessToken(token);
     req.user = {
       id: decoded.id,
       email: decoded.email,
@@ -25,6 +20,9 @@ function authenticate(req, res, next) {
     };
     return next();
   } catch (err) {
+    if (err.status === 500) {
+      return next(err);
+    }
     return next({ status: 401, message: 'Invalid or expired token' });
   }
 }

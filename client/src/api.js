@@ -36,8 +36,20 @@ export function login(email, password) {
   return api.post('/auth/login', { email, password });
 }
 
+export function register(email, password) {
+  return api.post('/auth/register', { email, password });
+}
+
+export function changePassword(oldPassword, newPassword) {
+  return api.post('/auth/change-password', { oldPassword, newPassword });
+}
+
 export function fetchSprints(store = 'pg') {
   return api.get(sprintBasePath(store)).then(withNormalizedList);
+}
+
+export function fetchSprint(id, store = 'pg') {
+  return api.get(`${sprintBasePath(store)}/${id}`).then(withNormalizedOne);
 }
 
 /** PG: HTTP QUERY. Mongo: GET all + local filter (no QUERY on /mongo). */
@@ -67,6 +79,18 @@ export function updateSprint(id, updated, store = 'pg') {
 
 export function deleteSprint(id, store = 'pg') {
   return api.delete(`${sprintBasePath(store)}/${id}`);
+}
+
+export function addActionItem(sprintId, title, store = 'pg') {
+  return api.post(`${sprintBasePath(store)}/${sprintId}/action-items`, { title });
+}
+
+export function updateActionItem(sprintId, itemId, changes, store = 'pg') {
+  return api.patch(`${sprintBasePath(store)}/${sprintId}/action-items/${itemId}`, changes);
+}
+
+export function deleteActionItem(sprintId, itemId, store = 'pg') {
+  return api.delete(`${sprintBasePath(store)}/${sprintId}/action-items/${itemId}`);
 }
 
 export function fetchProfile() {
