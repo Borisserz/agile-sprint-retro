@@ -14,9 +14,9 @@ export default function AppShell({ children, mode = 'app' }) {
 
   return (
     <div className="app-shell">
-      <header className="site-nav">
+      <header className="site-nav" role="banner">
         <div className="site-nav-inner">
-          <Link to={authed ? '/sprints' : '/login'} className="site-brand" onClick={closeMenu}>
+          <Link to={authed ? '/sprints' : '/'} className="site-brand" onClick={closeMenu}>
             <span className="brand-mark" aria-hidden="true" />
             <span className="site-brand-text">
               <span className="site-brand-kicker">Agile</span>
@@ -45,6 +45,19 @@ export default function AppShell({ children, mode = 'app' }) {
                 </NavLink>
               ) : (
                 <>
+                  <NavLink to="/" end className="site-nav-link" onClick={closeMenu}>
+                    Home
+                  </NavLink>
+                  {mode === 'marketing' && (
+                    <>
+                      <a className="site-nav-link" href="#about" onClick={closeMenu}>
+                        About
+                      </a>
+                      <a className="site-nav-link" href="#faq" onClick={closeMenu}>
+                        FAQ
+                      </a>
+                    </>
+                  )}
                   <NavLink to="/login" className="site-nav-link" onClick={closeMenu}>
                     Sign in
                   </NavLink>
@@ -73,7 +86,7 @@ export default function AppShell({ children, mode = 'app' }) {
 
       <div className={`app-main app-main--${mode}`}>{children}</div>
 
-      <footer className="site-footer">
+      <footer className="site-footer" role="contentinfo">
         <div className="site-footer-inner">
           <p className="site-footer-title">
             Сервис планирования спринтов и ретроспектив в Agile-командах

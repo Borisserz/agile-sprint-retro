@@ -1,28 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-const STORAGE_KEY = 'agile-sprints';
-
-function readStorage(fallback) {
+function readStorage(key, fallback) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (raw === null) return fallback;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : fallback;
+    return JSON.parse(raw);
   } catch {
     return fallback;
   }
 }
 
-export function useLocalStorage(initialValue, debounceMs = 500) {
-  const [value, setValue] = useState(() => readStorage(initialValue));
+/** Generic localStorage hook (Lab 5–6 pattern from Digital Library). */
+export function useLocalStorage(key, initialValue, debounceMs = 300) {
+  const [value, setValue] = useState(() => readStorage(key, initialValue));
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch {
+        /* quota / private mode — ignore */
+      }
     }, debounceMs);
-
     return () => clearTimeout(timer);
-  }, [value, debounceMs]);
+  }, [key, value, debounceMs]);
 
   return [value, setValue];
 }

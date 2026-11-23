@@ -8,7 +8,14 @@ import {
   searchSprints,
   updateSprint,
 } from '../api';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import ActionItems from './ActionItems';
+import RetroTip from './RetroTip';
+import SprintModal from './SprintModal';
+
+function sprintKey(store, id) {
+  return `${store}:${id}`;
+}
 
 const STATUSES = ['planned', 'active', 'done'];
 const FILTERS = ['all', ...STATUSES];
@@ -67,10 +74,16 @@ export default function SprintList() {
   const [filter, setFilter] = useState('all');
   const [store, setStore] = useState('pg');
   const [search, setSearch] = useState('');
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [detailSprint, setDetailSprint] = useState(null);
+  const [favorites, setFavorites] = useLocalStorage('sprint-retro_favorites', []);
+  const [healthMap, setHealthMap] = useLocalStorage('sprint-retro_health', {});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const requestId = useRef(0);
+  const searchWrapRef = useRef(null);
 
   const loadList = useCallback(async () => {
     const id = ++requestId.current;
@@ -131,18 +144,56 @@ export default function SprintList() {
     setError(null);
   }
 
+  const favoriteSet = useMemo(() => new Set(favorites), [favorites]);
+
+  const visibleSprints = useMemo(() => {
+    if (!favoritesOnly) return sprints;
+    return sprints.filter((s) => favoriteSet.has(sprintKey(store, s.id)));
+  }, [sprints, favoritesOnly, favoriteSet, store]);
+
+  const suggestions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (q.length < 1) return [];
+    return sprints
+      .filter((s) => {
+        const hay = `${s.name || ''} ${s.goal || ''}`.toLowerCase();
+        return hay.includes(q);
+      })
+      .slice(0, 6);
+  }, [search, sprints]);
+
   useEffect(() => {
-    document.title = `Sprints (${sprints.length}) | Agile Retro`;
-  }, [sprints.length]);
+    document.title = `Sprints (${visibleSprints.length}) | Agile Retro`;
+  }, [visibleSprints.length]);
+
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!searchWrapRef.current?.contains(e.target)) setSuggestOpen(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
 
   const stats = useMemo(() => {
     return {
-      total: sprints.length,
-      planned: sprints.filter((s) => s.status === 'planned').length,
-      active: sprints.filter((s) => s.status === 'active').length,
-      done: sprints.filter((s) => s.status === 'done').length,
+      total: visibleSprints.length,
+      planned: visibleSprints.filter((s) => s.status === 'planned').length,
+      active: visibleSprints.filter((s) => s.status === 'active').length,
+      done: visibleSprints.filter((s) => s.status === 'done').length,
     };
-  }, [sprints]);
+  }, [visibleSprints]);
+
+  function toggleFavorite(id) {
+    const key = sprintKey(store, id);
+    setFavorites((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  }
+
+  function setHealth(id, value) {
+    const key = sprintKey(store, id);
+    setHealthMap((prev) => ({ ...prev, [key]: value }));
+  }
 
   function onChange(e) {
     const { name, value } = e.target;
@@ -258,7 +309,7 @@ export default function SprintList() {
   }
 
   return (
-    <main className="room">
+    <main className="room" id="main-content">
       <header className="topbar">
         <div className="brand">
           <div>
@@ -287,6 +338,8 @@ export default function SprintList() {
           </dl>
         </div>
       </header>
+
+      <RetroTip />
 
       {notice && (
         <p className="banner banner--error room-banner" role="status">
@@ -406,15 +459,51 @@ export default function SprintList() {
                   </button>
                 ))}
               </div>
-              <label className="search">
-                Search
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="name or goal"
-                />
-              </label>
+              <div className="sprint-search" ref={searchWrapRef}>
+                <label className="search sprint-search__label" htmlFor="sprint-search-input">
+                  Search
+                  <input
+                    id="sprint-search-input"
+                    type="search"
+                    value={search}
+                    autoComplete="off"
+                    aria-autocomplete="list"
+                    aria-controls="sprint-search-suggest"
+                    aria-expanded={suggestOpen && suggestions.length > 0}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setSuggestOpen(true);
+                    }}
+                    onFocus={() => setSuggestOpen(true)}
+                    placeholder="name or goal"
+                  />
+                </label>
+                {suggestOpen && suggestions.length > 0 && (
+                  <ul
+                    id="sprint-search-suggest"
+                    className="sprint-search__suggest"
+                    role="listbox"
+                    aria-label="Sprint suggestions"
+                  >
+                    {suggestions.map((s) => (
+                      <li key={s.id} role="option">
+                        <button
+                          type="button"
+                          className="sprint-search__option"
+                          onClick={() => {
+                            setSearch(s.name);
+                            setSuggestOpen(false);
+                            setDetailSprint(s);
+                          }}
+                        >
+                          <strong>{s.name}</strong>
+                          <span>{s.goal}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               <div className="seg" role="group" aria-label="Filter by status">
                 {FILTERS.map((s) => (
                   <button
@@ -428,6 +517,14 @@ export default function SprintList() {
                   </button>
                 ))}
               </div>
+              <button
+                type="button"
+                className={`seg-btn${favoritesOnly ? ' is-on' : ''}`}
+                aria-pressed={favoritesOnly}
+                onClick={() => setFavoritesOnly((v) => !v)}
+              >
+                Favorites
+              </button>
             </div>
           </div>
 
@@ -440,26 +537,32 @@ export default function SprintList() {
             </div>
           )}
 
-          <ul className="lanes">
-            {!error && sprints.length === 0 && (
+          <ul className="lanes sprint-board__list">
+            {!error && visibleSprints.length === 0 && (
               <li className="empty">
                 <strong>No sprints here</strong>
-                <span>Try another filter or compose a new sprint.</span>
+                <span>
+                  {favoritesOnly
+                    ? 'Star a sprint to pin it in Favorites.'
+                    : 'Try another filter or compose a new sprint.'}
+                </span>
               </li>
             )}
-            {sprints.map((sprint, index) => {
+            {visibleSprints.map((sprint, index) => {
               const cap =
                 sprint.capacity === null || sprint.capacity === undefined
                   ? null
                   : sprint.capacity;
               const capPct =
                 cap === null ? 0 : Math.min(100, Math.round((cap / 60) * 100));
+              const fav = favoriteSet.has(sprintKey(store, sprint.id));
+              const health = Number(healthMap[sprintKey(store, sprint.id)] || 0);
               return (
                 <li
                   key={sprint.id}
                   className={`ticket ticket--${sprint.status}${
                     sameId(editingId, sprint.id) ? ' is-editing' : ''
-                  }`}
+                  }${fav ? ' ticket--fav' : ''}`}
                   data-index={String(index + 1).padStart(2, '0')}
                   style={{ '--delay': `${index * 45}ms` }}
                 >
@@ -467,10 +570,20 @@ export default function SprintList() {
                     <div className="ticket-meta">
                       <h3>{sprint.name}</h3>
                       <span className={`pill pill--${sprint.status}`}>{sprint.status}</span>
+                      <button
+                        type="button"
+                        className={`ticket__fav${fav ? ' is-on' : ''}`}
+                        aria-pressed={fav}
+                        aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
+                        onClick={() => toggleFavorite(sprint.id)}
+                      >
+                        ♥
+                      </button>
                     </div>
                     <p className="ticket-goal">{sprint.goal}</p>
                     <p className="ticket-dates">
                       {toInputDate(sprint.startDate)} → {toInputDate(sprint.endDate)}
+                      {health > 0 ? ` · health ${health}/5` : ''}
                     </p>
                     <div className="ticket-cap">
                       <div className="ticket-cap-row">
@@ -504,6 +617,13 @@ export default function SprintList() {
                     >
                       Open retro
                     </button>
+                    <button
+                      type="button"
+                      className="btn btn-quiet"
+                      onClick={() => setDetailSprint(sprint)}
+                    >
+                      Details
+                    </button>
                     <button type="button" className="btn btn-quiet" onClick={() => onEdit(sprint)}>
                       Edit
                     </button>
@@ -521,6 +641,20 @@ export default function SprintList() {
           </ul>
         </section>
       </div>
+
+      {detailSprint && (
+        <SprintModal
+          sprint={detailSprint}
+          health={Number(healthMap[sprintKey(store, detailSprint.id)] || 0)}
+          onHealthChange={(value) => setHealth(detailSprint.id, value)}
+          onClose={() => setDetailSprint(null)}
+          onOpenRetro={() => {
+            const id = detailSprint.id;
+            setDetailSprint(null);
+            navigate(`/sprints/${id}/retro?store=${store}`);
+          }}
+        />
+      )}
     </main>
   );
 }

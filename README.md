@@ -8,12 +8,13 @@ Coursework product on branch `kp`: Labs 1–8 + ПЗ3/ПЗ4 patterns (Router, Au
 
 | Path | Access |
 |------|--------|
+| `/` | guest landing (About / FAQ / CTA + Schema.org) |
 | `/login`, `/register` | guest |
-| `/sprints` | JWT — board, PG\|Mongo toggle, action items |
+| `/sprints` | JWT — board, PG\|Mongo, favorites, tips API, details modal |
 | `/sprints/:id/retro?store=pg\|mongo` | JWT — live Socket.IO retro |
 | `*` | 404 |
 
-Shell: sticky navbar + footer on every page.
+Shell: sticky navbar + footer on every page. Part 1 patterns: semantic landmarks, BEM blocks, `localStorage` favorites/health, autocomplete search, external Advice Slip tip with cache.
 
 ## Layout
 
