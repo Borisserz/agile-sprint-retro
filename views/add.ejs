@@ -1,24 +1,34 @@
 <%- include('partials/header') %>
 <h1>Добавить спринт</h1>
-<% if (typeof error !== 'undefined' && error) { %>
-  <p class="error"><%= error %></p>
+<% if (typeof errors !== 'undefined' && errors.length) { %>
+  <ul class="error">
+    <% errors.forEach(function (item) { %>
+      <li><%= item %></li>
+    <% }) %>
+  </ul>
 <% } %>
-<p class="hint">
-  Проверки: поля не пустые;
-  название <%= constraints.name.minLength %>–<%= constraints.name.maxLength %> символов;
-  цель <%= constraints.goal.minLength %>–<%= constraints.goal.maxLength %> символов;
-  ёмкость число от <%= constraints.capacity.min %> до <%= constraints.capacity.max %>.
-  Ограничения заданы в config/pz1Constraints.json.
-</p>
 <form method="post" action="/add?auth=1">
   <label>Название
-    <input name="name" required maxlength="<%= constraints.name.maxLength %>" />
+    <input name="name" required maxlength="<%= limits.name %>" value="<%= typeof values !== 'undefined' ? values.name : '' %>" />
   </label>
   <label>Цель
-    <input name="goal" required maxlength="<%= constraints.goal.maxLength %>" />
+    <input name="goal" required maxlength="<%= limits.goal %>" value="<%= typeof values !== 'undefined' ? values.goal : '' %>" />
   </label>
-  <label>Ёмкость (число ≥ 0)
-    <input name="capacity" type="number" required min="<%= constraints.capacity.min %>" max="<%= constraints.capacity.max %>" />
+  <label>Ёмкость
+    <input name="capacity" required inputmode="numeric" value="<%= typeof values !== 'undefined' ? values.capacity : '' %>" />
+  </label>
+  <label>Статус
+    <select name="status">
+      <% Object.keys(statuses).forEach(function (key) { %>
+        <option value="<%= key %>" <%= typeof values !== 'undefined' && values.status === key ? 'selected' : '' %>><%= statuses[key] %></option>
+      <% }) %>
+    </select>
+  </label>
+  <label>Начало
+    <input type="date" name="startDate" required value="<%= typeof values !== 'undefined' ? values.startDate : '' %>" />
+  </label>
+  <label>Окончание
+    <input type="date" name="endDate" required value="<%= typeof values !== 'undefined' ? values.endDate : '' %>" />
   </label>
   <button type="submit">Сохранить</button>
 </form>

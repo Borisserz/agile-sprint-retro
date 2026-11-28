@@ -1,44 +1,24 @@
 # agile-sprint-retro
 
-Backend for planning sprints and retrospectives in Agile teams.
+Практическое занятие №1. Страницы EJS и middleware. Ветка `pz21`.
 
-Practical 1 (ITIVP): EJS + middleware. Branch `pz21` (from `lab23`). Variant 49 (odd): request log to file.
+Тема — сервис планирования спринтов и ретроспектив. Список спринтов хранится в массиве в памяти (`data/pz1Sprints.js`). Поля записи те же, что у модели Sprint в лабораторных работах №2–3: название, цель, статус, ёмкость, даты начала и окончания. База данных для этих страниц не нужна.
 
-## Stack
-
-- Node.js / Express
-- PostgreSQL / Sequelize (Labs 2–3 API)
-- bcrypt / jsonwebtoken (Lab 3)
-- EJS SSR (ПЗ1) — in-memory list; constraints in `config/pz1Constraints.json`
-- Request log file: `logs/pz1-requests.log` (created automatically)
-
-## Setup
+## Запуск
 
 ```bash
 npm install
-npm run db:up
-cp .env.example .env
-# set JWT_SECRET in .env
-npm run db:migrate
-npm run db:seed
-npm run dev
+npm start
 ```
 
-Server: `http://localhost:3000`
+Открыть http://localhost:3000/?auth=1
 
-## Practical 1 — EJS pages
+Без параметра `auth=1` сервер перенаправляет на `/login`.
 
-| URL | Page |
-|-----|------|
-| http://localhost:3000/?auth=1 | list |
-| http://localhost:3000/item/1?auth=1 | detail |
-| http://localhost:3000/add?auth=1 | add form |
-| http://localhost:3000/demo-500?auth=1 | `500.ejs` demo |
-| http://localhost:3000/no-such-page | `404.ejs` |
-| http://localhost:3000/login | login hint |
-
-Form checks (server + `config/pz1Constraints.json`): non-empty fields, string length limits, capacity ≥ 0. Each sprint has unique `createdAt`.
-
-## Auth / sprint API (Labs 1–3)
-
-See Lab 3 README routes: `/auth/*`, `/profile`, `/sprints`.
+| Адрес | Страница |
+| --- | --- |
+| http://localhost:3000/?auth=1 | список спринтов |
+| http://localhost:3000/item/1?auth=1 | карточка спринта |
+| http://localhost:3000/add?auth=1 | форма добавления |
+| http://localhost:3000/login | подсказка по входу |
+| http://localhost:3000/no-such-page | страница 404 |

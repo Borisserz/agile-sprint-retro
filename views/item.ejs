@@ -2,7 +2,9 @@
 <h1><%= sprint.name %></h1>
 <p>ID: <%= sprint.id %></p>
 <p>Цель: <%= sprint.goal %></p>
+<p>Статус: <%= sprint.statusLabel %></p>
 <p>Ёмкость: <%= sprint.capacity %></p>
-<p>Время создания: <%= sprint.createdAt %></p>
+<p>Начало: <%= sprint.startLabel %></p>
+<p>Окончание: <%= sprint.endLabel %></p>
 <p><a href="/?auth=1">К списку</a></p>
 <%- include('partials/footer') %>
